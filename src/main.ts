@@ -391,6 +391,14 @@ listen<number>("scale_change", async (event) => {
 
   applyScale(newScale);
 
+  // Interrupt returning animation if scale changes to avoid physics mismatch
+  if (currentState === "returning") {
+    currentState = "idle";
+    idleTimer = 0;
+    returnVelocityX = 0;
+    returnVelocityY = 0;
+  }
+
   const oldPhysSize = Math.round(32 * oldScale * scaleFactor);
   const newPhysSize = Math.round(32 * newScale * scaleFactor);
 
