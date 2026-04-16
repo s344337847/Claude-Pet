@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Claude Pet Settings</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: system-ui, sans-serif; padding: 20px; background: #1e1e1e; color: #eee; }
+    h1 { font-size: 1.2rem; margin-bottom: 16px; }
+    h2 { font-size: 1rem; margin: 16px 0 8px; }
+    .row { display: flex; gap: 8px; margin-bottom: 12px; align-items: center; }
+    button { padding: 6px 12px; border: 1px solid #555; background: #333; color: #eee; border-radius: 4px; cursor: pointer; }
+    button.active { background: #6b8cff; border-color: #6b8cff; color: #111; }
+    input[type="range"] { flex: 1; }
+    input[type="color"] { width: 48px; height: 28px; border: none; background: none; cursor: pointer; }
+    .advanced { margin-top: 8px; padding-left: 8px; border-left: 2px solid #444; }
+    .hidden { display: none; }
+    .actions { margin-top: 20px; display: flex; gap: 8px; justify-content: flex-end; }
+  </style>
+</head>
+<body>
+  <h1>Claude Pet Settings</h1>
+
+  <h2>Size</h2>
+  <div class="row">
+    <button id="btn-small">Small (64×64)</button>
+    <button id="btn-medium">Medium (128×128)</button>
+    <button id="btn-large">Large (192×192)</button>
+  </div>
+  <div class="row">
+    <label>Scale</label>
+    <input type="range" id="scale-range" min="1" max="8" step="1" />
+    <span id="scale-value">4×</span>
+  </div>
+  <div class="row">
+    <span id="size-display">Current: 128×128</span>
+  </div>
+
+  <h2>Colors</h2>
+  <div class="row">
+    <label>Primary</label>
+    <input type="color" id="color-primary" />
+  </div>
+  <div class="row">
+    <button id="toggle-advanced">Advanced ▼</button>
+    <button id="btn-reset-colors">Reset to Primary</button>
+  </div>
+  <div id="advanced-colors" class="advanced hidden">
+    <div class="row"><label>Work</label><input type="color" id="color-work" /></div>
+    <div class="row"><label>Success</label><input type="color" id="color-success" /></div>
+    <div class="row"><label>Fail</label><input type="color" id="color-fail" /></div>
+    <div class="row"><label>Sleep</label><input type="color" id="color-sleep" /></div>
+  </div>
+
+  <div class="actions">
+    <button id="btn-save">Save</button>
+    <button id="btn-cancel">Cancel</button>
+  </div>
+
+  <script type="module" src="/src/settings.ts"></script>
+</body>
+</html>
