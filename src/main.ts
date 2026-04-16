@@ -342,14 +342,25 @@ listen<Colors>("colors_change", (event) => {
 });
 
 listen<number>("scale_change", async (event) => {
-  applyScale(event.payload);
-  try {
-    const pos = await win.outerPosition();
-    winX = pos.x;
-    winY = pos.y;
-  } catch (e) {
-    console.error("Failed to get outer position after scale change:", e);
+  const oldScale = scale;
+  const newScale = event.payload;
+
+  const monitor = await currentMonitor();
+  if (monitor) {
+    scaleFactor = monitor.scaleFactor;
   }
+
+  const pos = await win.outerPosition();
+
+  applyScale(newScale);
+
+  const oldPhysSize = Math.round(32 * oldScale * scaleFactor);
+  const newPhysSize = Math.round(32 * newScale * scaleFactor);
+
+  winX = pos.x;
+  winY = pos.y + oldPhysSize - newPhysSize;
+
+  await win.setPosition(new PhysicalPosition(winX, winY));
 });
 
 // --- Main loop ---
