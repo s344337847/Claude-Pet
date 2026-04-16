@@ -57,6 +57,17 @@ pub fn run() {
         .setup(|app| {
             let window = app.get_webview_window("main").expect("main window not found");
             let _ = window.set_ignore_cursor_events(true);
+
+            let config: Config = match app.store(STORE_PATH) {
+                Ok(store) => match store.get(CONFIG_KEY) {
+                    Some(v) => serde_json::from_value(v).unwrap_or_default(),
+                    None => Config::default(),
+                },
+                Err(_) => Config::default(),
+            };
+
+            let size = (32.0 * config.scale as f64) as u32;
+            let _ = window.set_size(tauri::Size::Logical(tauri::LogicalSize::new(size as f64, size as f64)));
             position_window_bottom_right(&window);
 
             let state_manager = StateManager::new(app.handle().clone());
@@ -66,6 +77,10 @@ pub fn run() {
                     Err(e) => eprintln!("Failed to start HTTP server: {}", e),
                 }
             });
+
+            let main_window = app.get_webview_window("main").expect("main window not found");
+            let _ = main_window.emit("scale_change", config.scale);
+            let _ = main_window.emit("colors_change", config.colors);
 
             // Tray menu
             let show_i = MenuItemBuilder::new("Show").id("show").build(app)?;
