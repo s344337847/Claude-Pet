@@ -44,3 +44,9 @@
 
 - 用户调整宠物大小时，窗口在原地以底部为锚点缩放。
 - 成功后跳回的位置、行走边界等计算与实际窗口位置一致。
+
+## Status
+
+Implemented on 2026-04-16.
+- `src-tauri/src/lib.rs`: `save_config` now preserves X and bottom-aligns Y on resize.
+- `src/main.ts`: `scale_change` listener re-syncs `winX`/`winY` after scale updates.
