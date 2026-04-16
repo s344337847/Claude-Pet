@@ -11,7 +11,15 @@ interface StatePayload {
 
 const canvas = document.getElementById("pet-canvas") as HTMLCanvasElement;
 const ctx = canvas.getContext("2d")!;
-const SCALE = 4;
+let scale = 4;
+
+let colors = {
+  primary: "#6b8cff",
+  work: "#ffaa44",
+  success: "#6b8cff",
+  fail: "#889999",
+  sleep: "#6b8cff",
+};
 
 let currentState: PetState = "idle";
 let stateTimer = 0;
@@ -44,12 +52,12 @@ function clear() {
 
 function pixel(x: number, y: number, color: string) {
   ctx.fillStyle = color;
-  ctx.fillRect(x * SCALE, y * SCALE, SCALE, SCALE);
+  ctx.fillRect(x * scale, y * scale, scale, scale);
 }
 
 function rect(x: number, y: number, w: number, h: number, color: string) {
   ctx.fillStyle = color;
-  ctx.fillRect(x * SCALE, y * SCALE, w * SCALE, h * SCALE);
+  ctx.fillRect(x * scale, y * scale, w * scale, h * scale);
 }
 
 // --- Draw helpers for pet body ---
@@ -121,23 +129,23 @@ function drawLegs(offsetY: number, color: string, frameNum: number) {
 function renderIdle() {
   const blink = Math.random() < 0.02;
   const offsetY = Math.sin(frame * 0.05) * 0.5;
-  drawBody(offsetY, "#6b8cff");
+  drawBody(offsetY, colors.primary);
   drawFace(offsetY, !blink, "neutral");
-  drawLegs(offsetY, "#6b8cff", 0);
+  drawLegs(offsetY, colors.primary, 0);
 }
 
 function renderWalk() {
   const bounce = Math.abs(Math.sin(frame * 0.2)) * 1.5;
-  drawBody(bounce, "#6b8cff");
+  drawBody(bounce, colors.primary);
   drawFace(bounce, true, "neutral");
-  drawLegs(bounce, "#6b8cff", frame);
+  drawLegs(bounce, colors.primary, frame);
 }
 
 function renderWork() {
   const typeOffset = (frame % 10) < 5 ? 0 : 1;
-  drawBody(0, "#ffaa44");
+  drawBody(0, colors.work);
   drawFace(0, true, "neutral");
-  drawLegs(0, "#ffaa44", 0);
+  drawLegs(0, colors.work, 0);
   // typing hands / keyboard
   rect(8 + typeOffset, 22, 4, 2, "#334");
   rect(20 - typeOffset, 22, 4, 2, "#334");
@@ -151,22 +159,22 @@ function renderWork() {
 
 function renderSuccess() {
   const jump = Math.abs(Math.sin(frame * 0.3)) * 4;
-  drawBody(-jump, "#6b8cff");
+  drawBody(-jump, colors.success);
   drawFace(-jump, true, "smile");
-  drawLegs(-jump, "#6b8cff", 0);
+  drawLegs(-jump, colors.success, 0);
   // confetti particles
-  const colors = ["#f44", "#4f4", "#44f", "#ff4"];
+  const confettiColors = ["#f44", "#4f4", "#44f", "#ff4"];
   for (let i = 0; i < 8; i++) {
     const px = (frame * 3 + i * 17) % 32;
     const py = ((frame * 2 + i * 11) % 20) + 8;
-    pixel(px, py, colors[i % colors.length]);
+    pixel(px, py, confettiColors[i % confettiColors.length]);
   }
 }
 
 function renderFail() {
-  drawBody(2, "#889");
+  drawBody(2, colors.fail);
   drawFace(2, false, "frown");
-  drawLegs(2, "#889", 0);
+  drawLegs(2, colors.fail, 0);
   // sweat drop
   pixel(22, 6, "#4af");
   pixel(22, 7, "#4af");
@@ -174,9 +182,9 @@ function renderFail() {
 
 function renderSleep() {
   const offsetY = Math.sin(frame * 0.03) * 0.5;
-  drawBody(offsetY, "#6b8cff");
+  drawBody(offsetY, colors.sleep);
   drawFace(offsetY, false, "neutral");
-  drawLegs(offsetY, "#6b8cff", 0);
+  drawLegs(offsetY, colors.sleep, 0);
   // Zzz
   const zOffset = (frame % 60) / 10;
   pixel(24, 4 - zOffset, "#fff");
@@ -213,8 +221,8 @@ function updateWalk() {
 
   if (currentState === "success") {
     // Jump to center
-    const targetX = Math.floor((screenW - 128) / 2);
-    const targetY = Math.floor((screenH - 128) / 2) - 100;
+    const targetX = Math.floor((screenW - 32 * scale) / 2);
+    const targetY = Math.floor((screenH - 32 * scale) / 2) - 100;
     winX += (targetX - winX) * 0.1;
     winY += (targetY - winY) * 0.1;
     win.setPosition(new LogicalPosition(winX, winY));
@@ -237,8 +245,8 @@ function updateWalk() {
     if (winX <= margin) {
       winX = margin;
       walkDirection = 1;
-    } else if (winX >= screenW - 128 - margin) {
-      winX = screenW - 128 - margin;
+    } else if (winX >= screenW - 32 * scale - margin) {
+      winX = screenW - 32 * scale - margin;
       walkDirection = -1;
     }
     win.setPosition(new LogicalPosition(winX, winY));
@@ -286,6 +294,20 @@ listen<StatePayload>("pet_state_change", (event) => {
   transitionTo(payload.state);
 });
 
+listen<{ primary: string; work: string; success: string; fail: string; sleep: string }>("colors_change", (event) => {
+  colors = event.payload;
+});
+
+listen<number>("scale_change", (event) => {
+  const newScale = event.payload;
+  scale = newScale;
+  // Update canvas logical resolution and CSS size
+  canvas.width = 32 * newScale;
+  canvas.height = 32 * newScale;
+  canvas.style.width = `${32 * newScale}px`;
+  canvas.style.height = `${32 * newScale}px`;
+});
+
 // --- Main loop ---
 function tick() {
   frame++;
@@ -298,7 +320,7 @@ function tick() {
       idleTimer = 0;
       stateTimer = 0;
       // Return to bottom edge after success/fail
-      winY = screenH - 128 - 50;
+      winY = screenH - 32 * scale - 50;
     }
   }
 
