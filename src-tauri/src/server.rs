@@ -12,12 +12,7 @@ use std::sync::Arc;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct TaskEvent {
-    #[serde(rename = "type")]
-    pub event_type: String,
-    pub task_id: String,
-    pub status: String,
-    pub subject: String,
-    pub timestamp: String,
+    pub event: String,
 }
 
 #[derive(Clone)]
@@ -29,12 +24,7 @@ async fn handle_event(
     State(state): State<Arc<ServerState>>,
     axum::Json(payload): axum::Json<TaskEvent>,
 ) -> impl IntoResponse {
-    state.state_manager.handle_event(
-        payload.task_id,
-        payload.status,
-        payload.subject,
-        payload.timestamp,
-    );
+    state.state_manager.handle_event(payload.event);
     StatusCode::OK
 }
 
