@@ -5,14 +5,8 @@ function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-async function sendEvent(status, taskId = "1", subject = "Test task") {
-  const body = {
-    type: "task_status_change",
-    task_id: taskId,
-    status: status,
-    subject: subject,
-    timestamp: new Date().toISOString(),
-  };
+async function sendEvent(event) {
+  const body = { event };
 
   try {
     const res = await fetch(URL, {
@@ -20,29 +14,29 @@ async function sendEvent(status, taskId = "1", subject = "Test task") {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
     });
-    console.log(`Sent ${status}:`, res.status);
+    console.log(`Sent ${event}:`, res.status);
   } catch (err) {
-    console.error(`Failed to send ${status}:`, err.message);
+    console.error(`Failed to send ${event}:`, err.message);
   }
 }
 
 async function main() {
-  console.log("Testing Claude Pet event pipeline...\n");
+  console.log("Testing Claude Pet event pipeline with official hooks...\n");
 
-  console.log("1. Task in progress -> expect Work animation");
-  await sendEvent("in_progress", "1", "Implement login flow");
+  console.log("1. UserPromptSubmit -> expect Work animation");
+  await sendEvent("work");
   await sleep(3000);
 
-  console.log("2. Task completed -> expect Success animation");
-  await sendEvent("completed", "1", "Implement login flow");
+  console.log("2. Stop -> expect Success animation");
+  await sendEvent("success");
   await sleep(5000);
 
-  console.log("3. Another task in progress -> expect Work animation");
-  await sendEvent("in_progress", "2", "Fix bug in parser");
+  console.log("3. Another UserPromptSubmit -> expect Work animation");
+  await sendEvent("work");
   await sleep(3000);
 
-  console.log("4. Task failed -> expect Fail animation");
-  await sendEvent("failed", "2", "Fix bug in parser");
+  console.log("4. Stop -> expect Success animation");
+  await sendEvent("success");
   await sleep(4000);
 
   console.log("\nTest complete.");
