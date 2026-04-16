@@ -1,0 +1,25 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  width: 128px;
+  height: 128px;
+  overflow: hidden;
+  background: transparent;
+}
+
+body {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+canvas {
+  display: block;
+  width: 128px;
+  height: 128px;
+  image-rendering: pixelated;
+}
