@@ -23,6 +23,7 @@ fn position_window_bottom_right(window: &WebviewWindow, logical_size: u32) {
 
 const STORE_PATH: &str = "config.json";
 const CONFIG_KEY: &str = "config";
+const BASE_LOGICAL_SIZE: f64 = 32.0;
 
 #[tauri::command]
 fn get_config(app: tauri::AppHandle) -> Result<Config, String> {
@@ -39,9 +40,31 @@ fn save_config(app: tauri::AppHandle, config: Config) -> Result<(), String> {
     store.set(CONFIG_KEY, serde_json::to_value(&config).map_err(|e| e.to_string())?);
 
     if let Some(main) = app.get_webview_window("main") {
-        let size = (32.0 * config.scale as f64) as u32;
-        let _ = main.set_size(tauri::Size::Logical(tauri::LogicalSize::new(size as f64, size as f64)));
-        position_window_bottom_right(&main, size);
+        let size = (BASE_LOGICAL_SIZE * config.scale as f64) as u32;
+        let old_size = main.outer_size().unwrap_or_else(|_| {
+            let scale_factor = main.scale_factor().unwrap_or(1.0);
+            tauri::PhysicalSize::new(
+                (size as f64 * scale_factor) as u32,
+                (size as f64 * scale_factor) as u32,
+            )
+        });
+        let old_height = old_size.height as i32;
+
+        if let Err(e) = main.set_size(tauri::Size::Logical(tauri::LogicalSize::new(size as f64, size as f64))) {
+            eprintln!("Failed to set window size: {}", e);
+        }
+
+        let scale_factor = main.scale_factor().unwrap_or(1.0);
+        let new_height = (BASE_LOGICAL_SIZE * config.scale as f64 * scale_factor) as i32;
+
+        if let Ok(pos) = main.outer_position() {
+            let new_x = pos.x;
+            let new_y = pos.y + old_height - new_height;
+            if let Err(e) = main.set_position(tauri::Position::Physical(tauri::PhysicalPosition::new(new_x, new_y))) {
+                eprintln!("Failed to set window position: {}", e);
+            }
+        }
+
         let _ = main.emit("scale_change", config.scale);
         let _ = main.emit("colors_change", config.colors);
     }
@@ -67,7 +90,7 @@ pub fn run() {
                 Err(_) => Config::default(),
             };
 
-            let size = (32.0 * config.scale as f64) as u32;
+            let size = (BASE_LOGICAL_SIZE * config.scale as f64) as u32;
             let _ = window.set_size(tauri::Size::Logical(tauri::LogicalSize::new(size as f64, size as f64)));
             position_window_bottom_right(&window, size);
 
