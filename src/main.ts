@@ -2,7 +2,7 @@ import { listen } from "@tauri-apps/api/event";
 import { invoke } from "@tauri-apps/api/core";
 import { getCurrentWindow, PhysicalPosition, currentMonitor } from "@tauri-apps/api/window";
 
-type PetState = "idle" | "walk" | "work" | "success" | "fail" | "sleep";
+type PetState = "idle" | "walk" | "work" | "success" | "fail" | "sleep" | "returning";
 
 interface Colors {
   primary: string;
@@ -52,6 +52,10 @@ let walkSpeed = 2;     // physical pixels per frame
 let idleTimer = 0;
 const MARGIN = 10;     // physical pixels
 const BOTTOM_OFFSET = 50; // physical pixels, matches Rust
+let returnVelocityX = 0;
+let returnVelocityY = 0;
+const RETURN_GRAVITY = 0.6;
+const RETURN_JUMP_VELOCITY = -15;
 
 function applyScale(s: number) {
   scale = s;
@@ -275,6 +279,34 @@ function updateWalk() {
     return;
   }
 
+  if (currentState === "returning") {
+    winX += returnVelocityX;
+    winY += returnVelocityY;
+    returnVelocityY += RETURN_GRAVITY;
+
+    const floorY = screenH - physSize - BOTTOM_OFFSET;
+
+    if (winY >= floorY) {
+      winY = floorY;
+      if (returnVelocityY > 0 && Math.abs(returnVelocityY) > 2) {
+        // Small bounce
+        returnVelocityY = -returnVelocityY * 0.4;
+        returnVelocityX *= 0.8;
+      } else {
+        // Landed, snap to idle
+        winX = Math.round(winX);
+        winY = Math.round(winY);
+        currentState = "idle";
+        idleTimer = 0;
+        returnVelocityX = 0;
+        returnVelocityY = 0;
+      }
+    }
+
+    win.setPosition(new PhysicalPosition(Math.round(winX), Math.round(winY)));
+    return;
+  }
+
   if (currentState === "idle") {
     idleTimer++;
     if (idleTimer > 180) {
@@ -331,6 +363,11 @@ function transitionTo(newState: PetState) {
     idleTimer = 0;
     return;
   }
+
+  if (newState === "returning") {
+    currentState = "returning";
+    return;
+  }
 }
 
 // --- Event listeners ---
@@ -356,6 +393,14 @@ listen<number>("scale_change", async (event) => {
 
   applyScale(newScale);
 
+  // Interrupt returning animation if scale changes to avoid physics mismatch
+  if (currentState === "returning") {
+    currentState = "idle";
+    idleTimer = 0;
+    returnVelocityX = 0;
+    returnVelocityY = 0;
+  }
+
   const oldPhysSize = Math.round(32 * oldScale * scaleFactor);
   const newPhysSize = Math.round(32 * newScale * scaleFactor);
 
@@ -372,12 +417,22 @@ function tick() {
   if (currentState === "success" || currentState === "fail") {
     stateTimer++;
     if (stateTimer > 120) {
-      // 2 seconds at 60fps, then go back to idle/walk
-      currentState = "idle";
-      idleTimer = 0;
       stateTimer = 0;
-      // Return to bottom edge after success/fail
-      winY = screenH - logicalToPhysical(32 * scale) - BOTTOM_OFFSET;
+      if (currentState === "success") {
+        // Start parabolic jump back
+        const physSize = logicalToPhysical(32 * scale);
+        const targetX = MARGIN + Math.random() * (screenW - physSize - MARGIN * 2);
+        const distanceX = targetX - winX;
+        const framesToTarget = 45 + Math.random() * 15; // 45~60 frames
+        returnVelocityX = distanceX / framesToTarget;
+        returnVelocityY = RETURN_JUMP_VELOCITY;
+        currentState = "returning";
+      } else {
+        // fail still snaps back instantly for now
+        currentState = "idle";
+        idleTimer = 0;
+        winY = screenH - logicalToPhysical(32 * scale) - BOTTOM_OFFSET;
+      }
     }
   }
 
