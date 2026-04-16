@@ -1,5 +1,4 @@
 import { invoke } from "@tauri-apps/api/core";
-import { getCurrentWindow } from "@tauri-apps/api/window";
 
 interface Colors {
   primary: string;
@@ -27,10 +26,8 @@ let currentConfig: Config = {
   },
 };
 
-const win = getCurrentWindow();
-
 const elScaleRange = document.getElementById("scale-range") as HTMLInputElement;
-const elScaleValue = document.getElementById("scale-value") as HTMLSpanElement;
+const elScaleValue = document.getElementById("scale-value") as HTMLDivElement;
 const elSizeDisplay = document.getElementById("size-display") as HTMLSpanElement;
 const btnSmall = document.getElementById("btn-small") as HTMLButtonElement;
 const btnMedium = document.getElementById("btn-medium") as HTMLButtonElement;
@@ -43,14 +40,18 @@ const colorSleep = document.getElementById("color-sleep") as HTMLInputElement;
 const toggleAdvanced = document.getElementById("toggle-advanced") as HTMLButtonElement;
 const advancedColors = document.getElementById("advanced-colors") as HTMLDivElement;
 const btnResetColors = document.getElementById("btn-reset-colors") as HTMLButtonElement;
-const btnSave = document.getElementById("btn-save") as HTMLButtonElement;
-const btnCancel = document.getElementById("btn-cancel") as HTMLButtonElement;
+
+const hexPrimary = document.getElementById("hex-primary") as HTMLSpanElement;
+const hexWork = document.getElementById("hex-work") as HTMLSpanElement;
+const hexSuccess = document.getElementById("hex-success") as HTMLSpanElement;
+const hexFail = document.getElementById("hex-fail") as HTMLSpanElement;
+const hexSleep = document.getElementById("hex-sleep") as HTMLSpanElement;
 
 function updateSizeUI() {
   const s = currentConfig.scale;
   elScaleRange.value = String(s);
-  elScaleValue.textContent = `${s}×`;
-  elSizeDisplay.textContent = `Current: ${32 * s}×${32 * s}`;
+  elScaleValue.textContent = `${s}x`;
+  elSizeDisplay.textContent = `Current: ${32 * s} x ${32 * s}`;
 
   [btnSmall, btnMedium, btnLarge].forEach((b) => b.classList.remove("active"));
   if (s === 2) btnSmall.classList.add("active");
@@ -73,12 +74,22 @@ elScaleRange.addEventListener("input", () => {
   applyScale(parseInt(elScaleRange.value, 10));
 });
 
+function setHexText(el: HTMLSpanElement, value: string) {
+  el.textContent = value.toUpperCase();
+}
+
 function updateColorsUI() {
   colorPrimary.value = currentConfig.colors.primary;
   colorWork.value = currentConfig.colors.work;
   colorSuccess.value = currentConfig.colors.success;
   colorFail.value = currentConfig.colors.fail;
   colorSleep.value = currentConfig.colors.sleep;
+
+  setHexText(hexPrimary, currentConfig.colors.primary);
+  setHexText(hexWork, currentConfig.colors.work);
+  setHexText(hexSuccess, currentConfig.colors.success);
+  setHexText(hexFail, currentConfig.colors.fail);
+  setHexText(hexSleep, currentConfig.colors.sleep);
 }
 
 function applyColors() {
@@ -87,29 +98,37 @@ function applyColors() {
 
 colorPrimary.addEventListener("input", () => {
   currentConfig.colors.primary = colorPrimary.value;
+  setHexText(hexPrimary, colorPrimary.value);
   applyColors();
 });
 
 colorWork.addEventListener("input", () => {
   currentConfig.colors.work = colorWork.value;
+  setHexText(hexWork, colorWork.value);
   applyColors();
 });
+
 colorSuccess.addEventListener("input", () => {
   currentConfig.colors.success = colorSuccess.value;
+  setHexText(hexSuccess, colorSuccess.value);
   applyColors();
 });
+
 colorFail.addEventListener("input", () => {
   currentConfig.colors.fail = colorFail.value;
+  setHexText(hexFail, colorFail.value);
   applyColors();
 });
+
 colorSleep.addEventListener("input", () => {
   currentConfig.colors.sleep = colorSleep.value;
+  setHexText(hexSleep, colorSleep.value);
   applyColors();
 });
 
 toggleAdvanced.addEventListener("click", () => {
-  advancedColors.classList.toggle("hidden");
-  toggleAdvanced.textContent = advancedColors.classList.contains("hidden") ? "Advanced ▼" : "Advanced ▲";
+  const isOpen = advancedColors.classList.toggle("open");
+  toggleAdvanced.classList.toggle("open", isOpen);
 });
 
 btnResetColors.addEventListener("click", () => {
@@ -119,14 +138,6 @@ btnResetColors.addEventListener("click", () => {
   currentConfig.colors.sleep = currentConfig.colors.primary;
   updateColorsUI();
   applyColors();
-});
-
-btnSave.addEventListener("click", () => {
-  invoke("save_config", { config: currentConfig }).then(() => win.close()).catch(console.error);
-});
-
-btnCancel.addEventListener("click", () => {
-  win.close();
 });
 
 async function init() {

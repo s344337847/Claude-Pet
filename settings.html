@@ -4,58 +4,355 @@
   <meta charset="UTF-8" />
   <title>Claude Pet Settings</title>
   <style>
+    :root {
+      --bg: #121212;
+      --surface: #1e1e1e;
+      --surface-hover: #2a2a2a;
+      --border: #333;
+      --text: #eee;
+      --text-secondary: #999;
+      --accent: #6b8cff;
+      --accent-hover: #5a7aee;
+      --radius: 10px;
+      --radius-sm: 6px;
+      --shadow: 0 4px 20px rgba(0,0,0,0.35);
+    }
+
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: system-ui, sans-serif; padding: 20px; background: #1e1e1e; color: #eee; }
-    h1 { font-size: 1.2rem; margin-bottom: 16px; }
-    h2 { font-size: 1rem; margin: 16px 0 8px; }
-    .row { display: flex; gap: 8px; margin-bottom: 12px; align-items: center; }
-    button { padding: 6px 12px; border: 1px solid #555; background: #333; color: #eee; border-radius: 4px; cursor: pointer; }
-    button.active { background: #6b8cff; border-color: #6b8cff; color: #111; }
-    input[type="range"] { flex: 1; }
-    input[type="color"] { width: 48px; height: 28px; border: none; background: none; cursor: pointer; }
-    .advanced { margin-top: 8px; padding-left: 8px; border-left: 2px solid #444; }
-    .hidden { display: none; }
-    .actions { margin-top: 20px; display: flex; gap: 8px; justify-content: flex-end; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, sans-serif;
+      padding: 24px;
+      background: var(--bg);
+      color: var(--text);
+      font-size: 14px;
+      line-height: 1.5;
+      min-height: 100vh;
+    }
+
+    h1 {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 20px;
+      letter-spacing: -0.2px;
+    }
+
+    .section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      margin-bottom: 16px;
+      box-shadow: var(--shadow);
+    }
+
+    .section-title {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: var(--text-secondary);
+      margin-bottom: 12px;
+    }
+
+    .row {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    .row:last-child { margin-bottom: 0; }
+
+    .segmented {
+      display: flex;
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+    }
+
+    .segmented button {
+      flex: 1;
+      padding: 8px 0;
+      border: none;
+      background: transparent;
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.15s ease, color 0.15s ease;
+    }
+
+    .segmented button:not(:last-child) {
+      border-right: 1px solid var(--border);
+    }
+
+    .segmented button:hover {
+      background: rgba(255,255,255,0.04);
+    }
+
+    .segmented button.active {
+      background: var(--accent);
+      color: #0b0d14;
+      font-weight: 600;
+    }
+
+    .slider-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    input[type="range"] {
+      flex: 1;
+      -webkit-appearance: none;
+      appearance: none;
+      height: 4px;
+      background: var(--border);
+      border-radius: 2px;
+      outline: none;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: var(--accent);
+      cursor: pointer;
+      border: 2px solid var(--bg);
+      box-shadow: 0 0 0 1px var(--border);
+      transition: transform 0.1s ease;
+    }
+
+    input[type="range"]::-webkit-slider-thumb:hover {
+      transform: scale(1.1);
+    }
+
+    input[type="range"]::-moz-range-thumb {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: var(--accent);
+      cursor: pointer;
+      border: 2px solid var(--bg);
+      box-shadow: 0 0 0 1px var(--border);
+    }
+
+    .scale-badge {
+      min-width: 36px;
+      text-align: center;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--accent);
+      background: rgba(107, 140, 255, 0.12);
+      padding: 4px 8px;
+      border-radius: var(--radius-sm);
+    }
+
+    .size-hint {
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    .color-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .color-row:last-child { border-bottom: none; }
+
+    .color-label {
+      font-size: 13px;
+      color: var(--text);
+    }
+
+    .color-value {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .hex-text {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 12px;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      min-width: 54px;
+      text-align: right;
+    }
+
+    input[type="color"] {
+      width: 32px;
+      height: 32px;
+      border: none;
+      border-radius: 50%;
+      background: none;
+      cursor: pointer;
+      padding: 0;
+      overflow: hidden;
+    }
+
+    input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
+    input[type="color"]::-webkit-color-swatch {
+      border: 2px solid var(--border);
+      border-radius: 50%;
+    }
+    input[type="color"]::-moz-color-swatch {
+      border: 2px solid var(--border);
+      border-radius: 50%;
+    }
+
+    .advanced-toggle {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      padding: 10px 12px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.15s ease;
+      margin-bottom: 8px;
+    }
+
+    .advanced-toggle:hover {
+      background: rgba(255,255,255,0.04);
+    }
+
+    .advanced-toggle .chevron {
+      transition: transform 0.2s ease;
+      color: var(--text-secondary);
+    }
+
+    .advanced-toggle.open .chevron {
+      transform: rotate(180deg);
+    }
+
+    .advanced-colors {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.25s ease, opacity 0.2s ease;
+      opacity: 0;
+    }
+
+    .advanced-colors.open {
+      max-height: 300px;
+      opacity: 1;
+    }
+
+    .advanced-colors .color-row {
+      padding-left: 8px;
+      border-left: 2px solid var(--accent);
+    }
+
+    .btn-subtle {
+      padding: 6px 10px;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .btn-subtle:hover {
+      color: var(--text);
+      background: rgba(255,255,255,0.04);
+      border-color: #444;
+    }
+
+    .hint {
+      font-size: 11px;
+      color: var(--text-secondary);
+      margin-top: 8px;
+      line-height: 1.4;
+    }
   </style>
 </head>
 <body>
   <h1>Claude Pet Settings</h1>
 
-  <h2>Size</h2>
-  <div class="row">
-    <button id="btn-small">Small (64×64)</button>
-    <button id="btn-medium">Medium (128×128)</button>
-    <button id="btn-large">Large (192×192)</button>
-  </div>
-  <div class="row">
-    <label>Scale</label>
-    <input type="range" id="scale-range" min="1" max="8" step="1" />
-    <span id="scale-value">4×</span>
-  </div>
-  <div class="row">
-    <span id="size-display">Current: 128×128</span>
-  </div>
-
-  <h2>Colors</h2>
-  <div class="row">
-    <label>Primary</label>
-    <input type="color" id="color-primary" />
-  </div>
-  <div class="row">
-    <button id="toggle-advanced">Advanced ▼</button>
-    <button id="btn-reset-colors">Reset to Primary</button>
-  </div>
-  <div id="advanced-colors" class="advanced hidden">
-    <div class="row"><label>Work</label><input type="color" id="color-work" /></div>
-    <div class="row"><label>Success</label><input type="color" id="color-success" /></div>
-    <div class="row"><label>Fail</label><input type="color" id="color-fail" /></div>
-    <div class="row"><label>Sleep</label><input type="color" id="color-sleep" /></div>
+  <div class="section">
+    <div class="section-title">Window Size</div>
+    <div class="row">
+      <div class="segmented">
+        <button id="btn-small" data-scale="2">Small</button>
+        <button id="btn-medium" data-scale="4">Medium</button>
+        <button id="btn-large" data-scale="6">Large</button>
+      </div>
+    </div>
+    <div class="row slider-row">
+      <input type="range" id="scale-range" min="1" max="8" step="1" />
+      <div class="scale-badge" id="scale-value">4x</div>
+    </div>
+    <div class="row">
+      <span class="size-hint" id="size-display">Current: 128 x 128</span>
+    </div>
   </div>
 
-  <div class="actions">
-    <button id="btn-save">Save</button>
-    <button id="btn-cancel">Cancel</button>
+  <div class="section">
+    <div class="section-title">Appearance</div>
+    <div class="color-row">
+      <span class="color-label">Primary</span>
+      <div class="color-value">
+        <span class="hex-text" id="hex-primary">#6B8CFF</span>
+        <input type="color" id="color-primary" />
+      </div>
+    </div>
+
+    <button class="advanced-toggle" id="toggle-advanced">
+      <span>Advanced colors</span>
+      <span class="chevron">▼</span>
+    </button>
+
+    <div class="advanced-colors" id="advanced-colors">
+      <div class="color-row">
+        <span class="color-label">Work</span>
+        <div class="color-value">
+          <span class="hex-text" id="hex-work">#FFAA44</span>
+          <input type="color" id="color-work" />
+        </div>
+      </div>
+      <div class="color-row">
+        <span class="color-label">Success</span>
+        <div class="color-value">
+          <span class="hex-text" id="hex-success">#6B8CFF</span>
+          <input type="color" id="color-success" />
+        </div>
+      </div>
+      <div class="color-row">
+        <span class="color-label">Fail</span>
+        <div class="color-value">
+          <span class="hex-text" id="hex-fail">#889999</span>
+          <input type="color" id="color-fail" />
+          </div>
+      </div>
+      <div class="color-row">
+        <span class="color-label">Sleep</span>
+        <div class="color-value">
+          <span class="hex-text" id="hex-sleep">#6B8CFF</span>
+          <input type="color" id="color-sleep" />
+        </div>
+      </div>
+      <div class="row" style="justify-content: flex-end; margin-top: 8px;">
+        <button class="btn-subtle" id="btn-reset-colors">Reset to Primary</button>
+      </div>
+    </div>
   </div>
+
+  <p class="hint">Changes are saved automatically. Close this window when you are done.</p>
 
   <script type="module" src="/src/settings.ts"></script>
 </body>

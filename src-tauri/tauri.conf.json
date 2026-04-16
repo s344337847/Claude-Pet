@@ -31,7 +31,7 @@
         "label": "settings",
         "title": "Claude Pet Settings",
         "width": 350,
-        "height": 450,
+        "height": 480,
         "decorations": true,
         "transparent": false,
         "alwaysOnTop": false,
