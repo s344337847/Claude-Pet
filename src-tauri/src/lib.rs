@@ -9,15 +9,14 @@ use tauri::menu::{MenuBuilder, MenuItemBuilder};
 use tauri::tray::TrayIconBuilder;
 use tauri_plugin_store::StoreExt;
 
-fn position_window_bottom_right(window: &WebviewWindow) {
+fn position_window_bottom_right(window: &WebviewWindow, logical_size: u32) {
     if let Some(monitor) = window.current_monitor().ok().flatten() {
         let size = monitor.size();
         let position = monitor.position();
         let scale_factor = monitor.scale_factor();
-        let width = (128.0 * scale_factor) as u32;
-        let height = (128.0 * scale_factor) as u32;
-        let x = position.x + (size.width as i32) - (width as i32) - 10;
-        let y = position.y + (size.height as i32) - (height as i32) - 50;
+        let phys = (logical_size as f64 * scale_factor) as i32;
+        let x = position.x + (size.width as i32) - phys - 10;
+        let y = position.y + (size.height as i32) - phys - 50;
         let _ = window.set_position(tauri::Position::Physical(tauri::PhysicalPosition::new(x, y)));
     }
 }
@@ -42,6 +41,7 @@ fn save_config(app: tauri::AppHandle, config: Config) -> Result<(), String> {
     if let Some(main) = app.get_webview_window("main") {
         let size = (32.0 * config.scale as f64) as u32;
         let _ = main.set_size(tauri::Size::Logical(tauri::LogicalSize::new(size as f64, size as f64)));
+        position_window_bottom_right(&main, size);
         let _ = main.emit("scale_change", config.scale);
         let _ = main.emit("colors_change", config.colors);
     }
@@ -57,6 +57,7 @@ pub fn run() {
         .setup(|app| {
             let window = app.get_webview_window("main").expect("main window not found");
             let _ = window.set_ignore_cursor_events(true);
+            let _ = window.set_shadow(false);
 
             let config: Config = match app.store(STORE_PATH) {
                 Ok(store) => match store.get(CONFIG_KEY) {
@@ -68,7 +69,7 @@ pub fn run() {
 
             let size = (32.0 * config.scale as f64) as u32;
             let _ = window.set_size(tauri::Size::Logical(tauri::LogicalSize::new(size as f64, size as f64)));
-            position_window_bottom_right(&window);
+            position_window_bottom_right(&window, size);
 
             let state_manager = StateManager::new(app.handle().clone());
             tauri::async_runtime::spawn(async move {
@@ -81,6 +82,16 @@ pub fn run() {
             let main_window = app.get_webview_window("main").expect("main window not found");
             let _ = main_window.emit("scale_change", config.scale);
             let _ = main_window.emit("colors_change", config.colors);
+
+            // Prevent settings window from being destroyed on close; hide instead
+            let settings_window = app.get_webview_window("settings").expect("settings window not found");
+            let settings_clone = settings_window.clone();
+            settings_window.on_window_event(move |event| {
+                if let tauri::WindowEvent::CloseRequested { api, .. } = event {
+                    api.prevent_close();
+                    let _ = settings_clone.hide();
+                }
+            });
 
             // Tray menu
             let show_i = MenuItemBuilder::new("Show").id("show").build(app)?;
@@ -119,7 +130,11 @@ pub fn run() {
                         }
                         "reset" => {
                             if let Some(w) = app.get_webview_window("main") {
-                                position_window_bottom_right(&w);
+                                let sf = w.scale_factor().unwrap_or(1.0);
+                                let size = w.inner_size()
+                                    .map(|s| (s.width as f64 / sf) as u32)
+                                    .unwrap_or(128);
+                                position_window_bottom_right(&w, size);
                             }
                         }
                         "quit" => {

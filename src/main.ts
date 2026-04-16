@@ -1,7 +1,22 @@
 import { listen } from "@tauri-apps/api/event";
-import { getCurrentWindow, LogicalPosition, currentMonitor } from "@tauri-apps/api/window";
+import { invoke } from "@tauri-apps/api/core";
+import { getCurrentWindow, PhysicalPosition, currentMonitor } from "@tauri-apps/api/window";
 
 type PetState = "idle" | "walk" | "work" | "success" | "fail" | "sleep";
+
+interface Colors {
+  primary: string;
+  work: string;
+  success: string;
+  fail: string;
+  sleep: string;
+}
+
+interface Config {
+  scale: number;
+  size_preset: string;
+  colors: Colors;
+}
 
 interface StatePayload {
   state: PetState;
@@ -25,25 +40,52 @@ let currentState: PetState = "idle";
 let stateTimer = 0;
 let frame = 0;
 
-// Window movement state
+// Window movement state (all in PHYSICAL pixels to match Rust backend)
 const win = getCurrentWindow();
 let winX = 0;
 let winY = 0;
 let screenW = 1920;
 let screenH = 1080;
+let scaleFactor = 1.0;
 let walkDirection = 1; // 1 = right, -1 = left
-let walkSpeed = 2;
+let walkSpeed = 2;     // physical pixels per frame
 let idleTimer = 0;
+const MARGIN = 10;     // physical pixels
+const BOTTOM_OFFSET = 50; // physical pixels, matches Rust
+
+function applyScale(s: number) {
+  scale = s;
+  const logicalSize = 32 * s;
+  canvas.width = logicalSize;
+  canvas.height = logicalSize;
+  canvas.style.width = `${logicalSize}px`;
+  canvas.style.height = `${logicalSize}px`;
+  document.body.style.width = `${logicalSize}px`;
+  document.body.style.height = `${logicalSize}px`;
+  document.documentElement.style.width = `${logicalSize}px`;
+  document.documentElement.style.height = `${logicalSize}px`;
+}
+
+function logicalToPhysical(v: number): number {
+  return Math.round(v * scaleFactor);
+}
 
 async function initScreenSize() {
   const monitor = await currentMonitor();
   if (monitor) {
+    scaleFactor = monitor.scaleFactor;
     screenW = monitor.size.width;
     screenH = monitor.size.height;
     const pos = await win.outerPosition();
     winX = pos.x;
     winY = pos.y;
   }
+}
+
+async function initConfig() {
+  const cfg = await invoke<Config>("get_config");
+  applyScale(cfg.scale);
+  colors = cfg.colors;
 }
 
 function clear() {
@@ -219,13 +261,15 @@ function render() {
 function updateWalk() {
   if (currentState === "work") return;
 
+  const physSize = logicalToPhysical(32 * scale);
+
   if (currentState === "success") {
     // Jump to center
-    const targetX = Math.floor((screenW - 32 * scale) / 2);
-    const targetY = Math.floor((screenH - 32 * scale) / 2) - 100;
+    const targetX = Math.floor((screenW - physSize) / 2);
+    const targetY = Math.floor((screenH - physSize) / 2) - 100;
     winX += (targetX - winX) * 0.1;
     winY += (targetY - winY) * 0.1;
-    win.setPosition(new LogicalPosition(winX, winY));
+    win.setPosition(new PhysicalPosition(winX, winY));
     return;
   }
 
@@ -241,15 +285,14 @@ function updateWalk() {
 
   if (currentState === "walk") {
     winX += walkSpeed * walkDirection;
-    const margin = 10;
-    if (winX <= margin) {
-      winX = margin;
+    if (winX <= MARGIN) {
+      winX = MARGIN;
       walkDirection = 1;
-    } else if (winX >= screenW - 32 * scale - margin) {
-      winX = screenW - 32 * scale - margin;
+    } else if (winX >= screenW - physSize - MARGIN) {
+      winX = screenW - physSize - MARGIN;
       walkDirection = -1;
     }
-    win.setPosition(new LogicalPosition(winX, winY));
+    win.setPosition(new PhysicalPosition(winX, winY));
 
     // Randomly stop to idle
     if (Math.random() < 0.005) {
@@ -294,18 +337,12 @@ listen<StatePayload>("pet_state_change", (event) => {
   transitionTo(payload.state);
 });
 
-listen<{ primary: string; work: string; success: string; fail: string; sleep: string }>("colors_change", (event) => {
+listen<Colors>("colors_change", (event) => {
   colors = event.payload;
 });
 
 listen<number>("scale_change", (event) => {
-  const newScale = event.payload;
-  scale = newScale;
-  // Update canvas logical resolution and CSS size
-  canvas.width = 32 * newScale;
-  canvas.height = 32 * newScale;
-  canvas.style.width = `${32 * newScale}px`;
-  canvas.style.height = `${32 * newScale}px`;
+  applyScale(event.payload);
 });
 
 // --- Main loop ---
@@ -320,7 +357,7 @@ function tick() {
       idleTimer = 0;
       stateTimer = 0;
       // Return to bottom edge after success/fail
-      winY = screenH - 32 * scale - 50;
+      winY = screenH - logicalToPhysical(32 * scale) - BOTTOM_OFFSET;
     }
   }
 
@@ -329,6 +366,6 @@ function tick() {
   requestAnimationFrame(tick);
 }
 
-initScreenSize().then(() => {
+Promise.all([initScreenSize(), initConfig()]).then(() => {
   requestAnimationFrame(tick);
 });

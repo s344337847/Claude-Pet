@@ -24,7 +24,8 @@
         "resizable": false,
         "center": false,
         "visible": true,
-        "focus": false
+        "focus": false,
+        "shadow": false
       },
       {
         "label": "settings",
