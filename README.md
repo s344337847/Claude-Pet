@@ -40,7 +40,7 @@ npm run tauri build
 
 Copy the contents of `settings.example.json` into your Claude Code `settings.json` (usually `~/.config/claude-code/settings.json` or `%APPDATA%\Claude\settings.json`).
 
-The pet listens on `http://127.0.0.1:9876/v1/event`. If the port is occupied, it automatically falls back to 9877–9880.
+The pet listens on `http://127.0.0.1:9876/v1/event/{event}`. If the port is occupied, it automatically falls back to 9877–9880.
 
 ## Test Without Claude Code
 

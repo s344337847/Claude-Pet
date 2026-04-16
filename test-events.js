@@ -1,18 +1,14 @@
 const PORT = 9876;
-const URL = `http://127.0.0.1:${PORT}/v1/event`;
+const BASE_URL = `http://127.0.0.1:${PORT}`;
 
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 async function sendEvent(event) {
-  const body = { event };
-
   try {
-    const res = await fetch(URL, {
+    const res = await fetch(`${BASE_URL}/v1/event/${event}`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
     });
     console.log(`Sent ${event}:`, res.status);
   } catch (err) {

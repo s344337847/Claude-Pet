@@ -29,7 +29,7 @@ There are no unit tests, linters, or formatters configured in this project.
 ### Communication Flow
 
 ```
-Claude Code hook  →  POST /v1/event  →  Rust Axum server  →  StateManager  →  Tauri Event  →  Frontend Canvas
+Claude Code hook  →  POST /v1/event/{event}  →  Rust Axum server  →  StateManager  →  Tauri Event  →  Frontend Canvas
 ```
 
 The pet does not poll; it relies entirely on Claude Code's `task_status_change` hook sending HTTP POSTs.
@@ -44,7 +44,7 @@ The pet does not poll; it relies entirely on Claude Code's `task_status_change` 
 ### Rust Backend (`src-tauri/src/`)
 
 - **`lib.rs`** — Tauri setup: creates the main window (borderless, transparent, always-on-top, click-through), positions it bottom-right, builds the system tray menu, and spawns the HTTP server.
-- **`server.rs`** — Axum HTTP server that binds to `127.0.0.1:9876–9880` (falls back through the range). Exposes a single route: `POST /v1/event`.
+- **`server.rs`** — Axum HTTP server that binds to `127.0.0.1:9876–9880` (falls back through the range). Exposes routes like `POST /v1/event/work`, `POST /v1/event/success`, etc.
 - **`state.rs`** — `StateManager` holds an `LruCache` of tasks (max 100). On each event it recalculates the global `PetState` (`Idle`, `Work`, `Success`, `Fail`, `Sleep`) and emits `pet_state_change` to the frontend.
 
 ### Window Configuration
@@ -55,7 +55,7 @@ Window properties are defined in `src-tauri/tauri.conf.json`:
 
 ### Hook Integration
 
-The expected Claude Code `settings.json` hook is in `settings.example.json`. It `curl`s `http://127.0.0.1:9876/v1/event` with a JSON body containing `type`, `task_id`, `status`, `subject`, and `timestamp`.
+The expected Claude Code `settings.json` hook is in `settings.example.json`. It sends POST requests to paths like `http://127.0.0.1:9876/v1/event/work` or `http://127.0.0.1:9876/v1/event/success`.
 
 ## Important File Locations
 

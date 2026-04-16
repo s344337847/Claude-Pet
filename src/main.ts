@@ -269,7 +269,9 @@ function updateWalk() {
     const targetY = Math.floor((screenH - physSize) / 2) - 100;
     winX += (targetX - winX) * 0.1;
     winY += (targetY - winY) * 0.1;
-    win.setPosition(new PhysicalPosition(winX, winY));
+    if (Math.abs(targetX - winX) < 1) winX = targetX;
+    if (Math.abs(targetY - winY) < 1) winY = targetY;
+    win.setPosition(new PhysicalPosition(Math.round(winX), Math.round(winY)));
     return;
   }
 
@@ -292,7 +294,7 @@ function updateWalk() {
       winX = screenW - physSize - MARGIN;
       walkDirection = -1;
     }
-    win.setPosition(new PhysicalPosition(winX, winY));
+    win.setPosition(new PhysicalPosition(Math.round(winX), Math.round(winY)));
 
     // Randomly stop to idle
     if (Math.random() < 0.005) {
@@ -360,7 +362,7 @@ listen<number>("scale_change", async (event) => {
   winX = pos.x;
   winY = pos.y + oldPhysSize - newPhysSize;
 
-  await win.setPosition(new PhysicalPosition(winX, winY));
+  await win.setPosition(new PhysicalPosition(Math.round(winX), Math.round(winY)));
 });
 
 // --- Main loop ---
