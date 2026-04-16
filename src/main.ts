@@ -341,8 +341,15 @@ listen<Colors>("colors_change", (event) => {
   colors = event.payload;
 });
 
-listen<number>("scale_change", (event) => {
+listen<number>("scale_change", async (event) => {
   applyScale(event.payload);
+  try {
+    const pos = await win.outerPosition();
+    winX = pos.x;
+    winY = pos.y;
+  } catch (e) {
+    console.error("Failed to get outer position after scale change:", e);
+  }
 });
 
 // --- Main loop ---
