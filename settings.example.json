@@ -5,12 +5,10 @@
         "hooks": [
           {
             "type": "command",
-            "command": "curl",
+            "command": "node",
             "args": [
-              "-s", "-X", "POST",
-              "http://127.0.0.1:9876/v1/event",
-              "-H", "Content-Type: application/json",
-              "-d", "{\"event\":\"work\"}"
+              "-e",
+              "require('http').request({hostname:'127.0.0.1',port:9876,path:'/v1/event',method:'POST',headers:{'Content-Type':'application/json'}},res=>process.exit(0)).on('error',()=>process.exit(0)).end(JSON.stringify({event:'work'}))"
             ]
           }
         ]
@@ -21,12 +19,10 @@
         "hooks": [
           {
             "type": "command",
-            "command": "curl",
+            "command": "node",
             "args": [
-              "-s", "-X", "POST",
-              "http://127.0.0.1:9876/v1/event",
-              "-H", "Content-Type: application/json",
-              "-d", "{\"event\":\"success\"}"
+              "-e",
+              "require('http').request({hostname:'127.0.0.1',port:9876,path:'/v1/event',method:'POST',headers:{'Content-Type':'application/json'}},res=>process.exit(0)).on('error',()=>process.exit(0)).end(JSON.stringify({event:'success'}))"
             ]
           }
         ]
