@@ -1,12 +1,14 @@
 mod config;
+mod pet_manager;
 mod server;
 mod state;
 
 use config::Config;
-use state::StateManager;
-use tauri::{Emitter, Manager, WebviewWindow};
+use pet_manager::PetManager;
+use std::sync::Arc;
 use tauri::menu::{MenuBuilder, MenuItemBuilder};
 use tauri::tray::TrayIconBuilder;
+use tauri::{Emitter, Manager, WebviewWindow};
 use tauri_plugin_store::StoreExt;
 
 fn position_window_bottom_right(window: &WebviewWindow, logical_size: u32) {
@@ -39,15 +41,25 @@ fn save_config(app: tauri::AppHandle, config: Config) -> Result<(), String> {
     let store = app.store(STORE_PATH).map_err(|e| e.to_string())?;
     store.set(CONFIG_KEY, serde_json::to_value(&config).map_err(|e| e.to_string())?);
 
-    if let Some(main) = app.get_webview_window("main") {
+    if let Some(pet) = app.get_webview_window("default_pet") {
         let size = (BASE_LOGICAL_SIZE * config.scale as f64) as u32;
-        if let Err(e) = main.set_size(tauri::Size::Logical(tauri::LogicalSize::new(size as f64, size as f64))) {
+        if let Err(e) = pet.set_size(tauri::Size::Logical(tauri::LogicalSize::new(size as f64, size as f64))) {
             eprintln!("Failed to set window size: {}", e);
         }
-        let _ = main.emit("scale_change", config.scale);
-        let _ = main.emit("colors_change", config.colors);
+        let _ = pet.emit("scale_change", config.scale);
+        let _ = pet.emit("colors_change", config.colors);
     }
     Ok(())
+}
+
+#[tauri::command]
+fn create_pet_window(label: String, state: tauri::State<Arc<PetManager>>) {
+    state.create_pet(Some(label));
+}
+
+#[tauri::command]
+fn destroy_pet(label: String, state: tauri::State<Arc<PetManager>>) {
+    state.destroy_pet(label);
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -55,13 +67,14 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_store::Builder::default().build())
-        .invoke_handler(tauri::generate_handler![get_config, save_config])
+        .invoke_handler(tauri::generate_handler![get_config, save_config, create_pet_window, destroy_pet])
         .setup(|app| {
-            let window = app.get_webview_window("main").expect("main window not found");
-            let _ = window.set_ignore_cursor_events(true);
-            let _ = window.set_shadow(false);
+            let main_window = app.get_webview_window("main").expect("main window not found");
+            let _ = main_window.set_ignore_cursor_events(true);
+            let _ = main_window.set_shadow(false);
+            let _ = main_window.hide();
 
-            let config: Config = match app.store(STORE_PATH) {
+            let _config: Config = match app.store(STORE_PATH) {
                 Ok(store) => match store.get(CONFIG_KEY) {
                     Some(v) => serde_json::from_value(v).unwrap_or_default(),
                     None => Config::default(),
@@ -69,21 +82,13 @@ pub fn run() {
                 Err(_) => Config::default(),
             };
 
-            let size = (BASE_LOGICAL_SIZE * config.scale as f64) as u32;
-            let _ = window.set_size(tauri::Size::Logical(tauri::LogicalSize::new(size as f64, size as f64)));
-            position_window_bottom_right(&window, size);
-
-            let state_manager = StateManager::new(app.handle().clone());
+            let pet_manager = PetManager::new(app.handle().clone());
             tauri::async_runtime::spawn(async move {
-                match server::start_server(state_manager).await {
+                match server::start_server(pet_manager).await {
                     Ok(port) => println!("HTTP server started on port {}", port),
                     Err(e) => eprintln!("Failed to start HTTP server: {}", e),
                 }
             });
-
-            let main_window = app.get_webview_window("main").expect("main window not found");
-            let _ = main_window.emit("scale_change", config.scale);
-            let _ = main_window.emit("colors_change", config.colors);
 
             // Prevent settings window from being destroyed on close; hide instead
             let settings_window = app.get_webview_window("settings").expect("settings window not found");
@@ -114,13 +119,13 @@ pub fn run() {
                 .on_menu_event(|app: &tauri::AppHandle, event| {
                     match event.id.as_ref() {
                         "show" => {
-                            if let Some(w) = app.get_webview_window("main") {
+                            if let Some(w) = app.get_webview_window("default_pet") {
                                 let _ = w.show();
                                 let _ = w.set_focus();
                             }
                         }
                         "hide" => {
-                            if let Some(w) = app.get_webview_window("main") {
+                            if let Some(w) = app.get_webview_window("default_pet") {
                                 let _ = w.hide();
                             }
                         }
@@ -131,7 +136,7 @@ pub fn run() {
                             }
                         }
                         "reset" => {
-                            if let Some(w) = app.get_webview_window("main") {
+                            if let Some(w) = app.get_webview_window("default_pet") {
                                 let sf = w.scale_factor().unwrap_or(1.0);
                                 let size = w.inner_size()
                                     .map(|s| (s.width as f64 / sf) as u32)
