@@ -66,23 +66,35 @@ impl PetManager {
 
         let Some(ref sid) = session_id else { return; };
 
-        let label = {
+        let exists = {
             let pets = self.pets.lock().unwrap();
-            if !pets.contains_key(sid) {
-                drop(pets);
-                self.create_pet(Some(sid.clone()));
-            }
-            sid.clone()
+            pets.contains_key(sid)
         };
 
-        let payload = StatePayload {
-            state: new_state.clone(),
-            label: label.clone(),
-            task_count: 0,
-            in_progress_count: 0,
-        };
+        // session_end 且宠物不存在：直接忽略
+        if matches!(new_state, PetState::Exit) && !exists {
+            return;
+        }
 
-        let _ = self.app_handle.emit("pet_state_change", payload);
+        if !exists {
+            // 创建宠物：窗口建好后先播放 Enter 动画，
+            // 2 秒后再切换到目标状态（session_start 本身就是 Enter，不需要 follow_up）
+            let follow_up = if matches!(new_state, PetState::Enter) {
+                None
+            } else {
+                Some(new_state.clone())
+            };
+            self.create_pet(Some(sid.clone()), follow_up);
+        } else {
+            // 宠物已存在，直接发送目标状态
+            let payload = StatePayload {
+                state: new_state.clone(),
+                label: sid.clone(),
+                task_count: 0,
+                in_progress_count: 0,
+            };
+            let _ = self.app_handle.emit("pet_state_change", payload);
+        }
 
         if matches!(new_state, PetState::Exit) {
             let manager = self.clone();
@@ -94,7 +106,11 @@ impl PetManager {
         }
     }
 
-    pub fn create_pet(self: &Arc<Self>, session_id: Option<String>) -> String {
+    pub fn create_pet(
+        self: &Arc<Self>,
+        session_id: Option<String>,
+        follow_up_state: Option<PetState>,
+    ) -> String {
         let label = session_id.clone().expect("create_pet requires a session_id");
         let style_name = self.pick_style();
         {
@@ -115,6 +131,7 @@ impl PetManager {
         let window_label = label.clone();
         let style_for_event = style_name.clone();
         let manager = self.clone();
+        let follow_up = follow_up_state.clone();
         tauri::async_runtime::spawn(async move {
             let label_for_event = window_label.clone();
             let config: Config = match app_handle.store(STORE_PATH) {
@@ -150,6 +167,29 @@ impl PetManager {
                         "style_name": style_for_event,
                     }),
                 );
+                // 总是先发 Enter 入场动画
+                let _ = app_handle.emit(
+                    "pet_state_change",
+                    StatePayload {
+                        state: PetState::Enter,
+                        label: label_for_event.clone(),
+                        task_count: 0,
+                        in_progress_count: 0,
+                    },
+                );
+                // 如果有后续状态，等入场动画结束后发送
+                if let Some(state) = follow_up {
+                    tokio::time::sleep(tokio::time::Duration::from_secs(2)).await;
+                    let _ = app_handle.emit(
+                        "pet_state_change",
+                        StatePayload {
+                            state,
+                            label: label_for_event,
+                            task_count: 0,
+                            in_progress_count: 0,
+                        },
+                    );
+                }
             }
         });
 
