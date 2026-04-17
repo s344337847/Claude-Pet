@@ -1,7 +1,7 @@
 import type { StyleConfig, StyleColors } from './styles/types';
 import type { PetState } from '../types';
 import type { Action } from './actions/types';
-import { IdleAction, WalkAction, WorkAction, SuccessAction, FailAction, SleepAction, ReturningAction } from './actions';
+import { IdleAction, WalkAction, WorkAction, SuccessAction, FailAction, SleepAction, ReturningAction, EnterAction, ExitAction } from './actions';
 import { PetRenderer } from './renderer/PetRenderer';
 
 const ACTIONS: Record<PetState, new () => Action> = {
@@ -12,6 +12,8 @@ const ACTIONS: Record<PetState, new () => Action> = {
   fail: FailAction,
   sleep: SleepAction,
   returning: ReturningAction,
+  enter: EnterAction,
+  exit: ExitAction,
 };
 
 export class Pet {
