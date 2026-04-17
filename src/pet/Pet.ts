@@ -48,6 +48,10 @@ export class Pet {
     this.style = { ...this.style, colors };
   }
 
+  setStyle(style: StyleConfig) {
+    this.style = style;
+  }
+
   transitionTo(state: PetState) {
     this.setState(state);
   }
