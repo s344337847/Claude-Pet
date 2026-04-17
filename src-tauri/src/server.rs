@@ -23,9 +23,10 @@ pub struct EventBody {
 async fn handle_event(
     State(state): State<Arc<ServerState>>,
     Path(event): Path<String>,
-    Json(body): Json<EventBody>,
+    body: Option<Json<EventBody>>,
 ) -> impl IntoResponse {
-    state.pet_manager.handle_event(event, body.task_id);
+    let task_id = body.and_then(|b| b.task_id.clone());
+    state.pet_manager.handle_event(event, task_id);
     StatusCode::OK
 }
 
