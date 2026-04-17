@@ -237,6 +237,13 @@ function renderSleep() {
   pixel(26, 2 - zOffset, "#fff");
 }
 
+function renderReturning() {
+  const bounce = Math.abs(Math.sin(frame * 0.2)) * 1.5;
+  drawBody(bounce, colors.success);
+  drawFace(bounce, true, "smile");
+  drawLegs(bounce, colors.success, frame);
+}
+
 function render() {
   clear();
   switch (currentState) {
@@ -257,6 +264,9 @@ function render() {
       break;
     case "sleep":
       renderSleep();
+      break;
+    case "returning":
+      renderReturning();
       break;
   }
 }
