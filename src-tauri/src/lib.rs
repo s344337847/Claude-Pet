@@ -11,7 +11,7 @@ use tauri::tray::TrayIconBuilder;
 use tauri::{Emitter, Manager, WebviewWindow};
 use tauri_plugin_store::StoreExt;
 
-fn position_window_bottom_right(window: &WebviewWindow, logical_size: u32) {
+pub(crate) fn position_window_bottom_right(window: &WebviewWindow, logical_size: u32) {
     if let Some(monitor) = window.current_monitor().ok().flatten() {
         let size = monitor.size();
         let position = monitor.position();

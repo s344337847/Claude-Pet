@@ -83,7 +83,7 @@ impl PetManager {
         let window_label = label.clone();
         let app_handle = self.app_handle.clone();
         tauri::async_runtime::spawn(async move {
-            let _ = tauri::WebviewWindowBuilder::new(
+            if let Ok(window) = tauri::WebviewWindowBuilder::new(
                 &app_handle,
                 window_label,
                 tauri::WebviewUrl::App("index.html".into()),
@@ -95,7 +95,12 @@ impl PetManager {
             .always_on_top(true)
             .skip_taskbar(true)
             .resizable(false)
-            .build();
+            .shadow(false)
+            .build()
+            {
+                let _ = window.set_ignore_cursor_events(true);
+                crate::position_window_bottom_right(&window, 128);
+            }
         });
 
         label
