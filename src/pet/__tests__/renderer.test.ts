@@ -1,7 +1,10 @@
 import { describe, it, expect } from 'vitest';
+import { defaultStyle } from '../styles';
 
-describe('PetRenderer placeholder', () => {
-  it('should have a PetRenderer class', () => {
-    expect(typeof PetRenderer).toBe('function');
+describe('StyleConfig', () => {
+  it('defaultStyle has required body parts', () => {
+    expect(defaultStyle.body.head.w).toBe(12);
+    expect(defaultStyle.body.ears.length).toBe(4);
+    expect(defaultStyle.legs.left.length).toBe(2);
   });
 });
