@@ -2,7 +2,7 @@ import { listen } from '@tauri-apps/api/event';
 import { invoke } from '@tauri-apps/api/core';
 import { getCurrentWindow, PhysicalPosition, currentMonitor } from '@tauri-apps/api/window';
 import { Pet } from './Pet';
-import { defaultStyle } from './styles';
+import { defaultStyle, STYLES } from './styles';
 import type { PetState } from '../types';
 
 const canvas = document.getElementById('pet-canvas') as HTMLCanvasElement;
@@ -161,6 +161,13 @@ listen<{ label: string; state: PetState }>('pet_state_change', (event) => {
       winY = screenH; // start just below visible area
     }
     pet.setState(event.payload.state);
+  }
+});
+
+listen<{ label: string; style_name: string }>('pet_style_init', (event) => {
+  if (event.payload.label === label) {
+    const style = STYLES.find((s) => s.name === event.payload.style_name) || defaultStyle;
+    pet.setStyle(style);
   }
 });
 
