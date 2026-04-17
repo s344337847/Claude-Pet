@@ -1,7 +1,10 @@
 use crate::state::{PetState, StatePayload};
+use fastrand;
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 use tauri::{Emitter, Manager};
+
+const STYLE_NAMES: &[&str] = &["default-cat", "dog"];
 
 pub struct PetInstance {
     pub label: String,
@@ -10,6 +13,7 @@ pub struct PetInstance {
 
 pub struct PetManager {
     pets: Mutex<HashMap<String, PetInstance>>,
+    style_counts: Mutex<HashMap<String, u32>>,
     app_handle: tauri::AppHandle,
 }
 
@@ -17,10 +21,33 @@ impl PetManager {
     pub fn new(app_handle: tauri::AppHandle) -> Arc<Self> {
         let manager = Arc::new(Self {
             pets: Mutex::new(HashMap::new()),
+            style_counts: Mutex::new(HashMap::new()),
             app_handle: app_handle.clone(),
         });
         manager.create_pet(None);
         manager
+    }
+
+    fn pick_style(&self) -> String {
+        let counts = self.style_counts.lock().unwrap();
+        let mut min_count = u32::MAX;
+        let mut candidates = Vec::new();
+        for name in STYLE_NAMES {
+            let count = counts.get(*name).copied().unwrap_or(0);
+            if count < min_count {
+                min_count = count;
+                candidates.clear();
+                candidates.push(*name);
+            } else if count == min_count {
+                candidates.push(*name);
+            }
+        }
+        candidates[fastrand::usize(..candidates.len())].to_string()
+    }
+
+    fn commit_style(&self, style_name: &str) {
+        let mut counts = self.style_counts.lock().unwrap();
+        *counts.entry(style_name.to_string()).or_insert(0) += 1;
     }
 
     pub fn handle_event(self: &Arc<Self>, event: String, session_id: Option<String>) {
@@ -68,6 +95,7 @@ impl PetManager {
 
     pub fn create_pet(self: &Arc<Self>, session_id: Option<String>) -> String {
         let label = session_id.clone().unwrap_or_else(|| "default_pet".to_string());
+        let style_name = self.pick_style();
         {
             let mut pets = self.pets.lock().unwrap();
             if pets.contains_key(&label) {
@@ -82,9 +110,12 @@ impl PetManager {
             );
         }
 
-        let window_label = label.clone();
         let app_handle = self.app_handle.clone();
+        let window_label = label.clone();
+        let style_for_event = style_name.clone();
+        let manager = self.clone();
         tauri::async_runtime::spawn(async move {
+            let label_for_event = window_label.clone();
             if let Ok(window) = tauri::WebviewWindowBuilder::new(
                 &app_handle,
                 window_label,
@@ -102,6 +133,14 @@ impl PetManager {
             {
                 let _ = window.set_ignore_cursor_events(true);
                 crate::position_window_bottom_right(&window, 128);
+                manager.commit_style(&style_for_event);
+                let _ = app_handle.emit(
+                    "pet_style_init",
+                    serde_json::json!({
+                        "label": label_for_event,
+                        "style_name": style_for_event,
+                    }),
+                );
             }
         });
 
