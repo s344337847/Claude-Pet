@@ -26,6 +26,7 @@ export interface StyleConfig {
       neutral: PixelPoint[];
       frown: PixelPoint[];
     };
+    tongue?: PixelPoint[];
   };
   legs: {
     left: PixelPoint[];
