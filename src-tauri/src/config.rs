@@ -13,6 +13,7 @@ pub struct Colors {
 pub struct Config {
     pub scale: u32,
     pub size_preset: String,
+    pub fps_limit: u32,
     pub colors: Colors,
 }
 
@@ -21,6 +22,7 @@ impl Default for Config {
         Self {
             scale: 4,
             size_preset: "medium".to_string(),
+            fps_limit: 60,
             colors: Colors {
                 primary: "#6b8cff".to_string(),
                 work: "#ffaa44".to_string(),

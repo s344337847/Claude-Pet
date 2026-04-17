@@ -28,6 +28,9 @@ const RETURN_GRAVITY = 0.6;
 const RETURN_JUMP_VELOCITY = -15;
 const SLIDE_SPEED = 10; // physical pixels per frame
 
+let targetFps = 60;
+let lastFrameTime = 0;
+
 const pet = new Pet(defaultStyle, scale, ctx);
 
 function applyScale(s: number) {
@@ -59,8 +62,9 @@ async function initScreenSize() {
 }
 
 async function initConfig() {
-  const cfg = await invoke<{ scale: number; colors: typeof defaultStyle.colors }>('get_config');
+  const cfg = await invoke<{ scale: number; fps_limit: number; colors: typeof defaultStyle.colors }>('get_config');
   applyScale(cfg.scale);
+  targetFps = cfg.fps_limit || 60;
   pet.setColors(cfg.colors);
 }
 
@@ -164,6 +168,10 @@ listen<typeof defaultStyle.colors>('colors_change', (event) => {
   pet.setColors(event.payload);
 });
 
+listen<number>('fps_limit_change', (event) => {
+  targetFps = event.payload || 60;
+});
+
 listen<number>('scale_change', async (event) => {
   const oldScale = scale;
   const newScale = event.payload;
@@ -192,7 +200,16 @@ listen<number>('scale_change', async (event) => {
   await win.setPosition(new PhysicalPosition(Math.round(winX), Math.round(winY)));
 });
 
-function tick() {
+function tick(timestamp: number) {
+  if (targetFps > 0) {
+    const minFrameInterval = 1000 / targetFps;
+    if (timestamp - lastFrameTime < minFrameInterval) {
+      requestAnimationFrame(tick);
+      return;
+    }
+    lastFrameTime = timestamp;
+  }
+
   const state = pet.getCurrentState();
 
   if (state === 'success' || state === 'fail') {

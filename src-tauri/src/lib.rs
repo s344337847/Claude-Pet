@@ -47,6 +47,7 @@ fn save_config(app: tauri::AppHandle, config: Config) -> Result<(), String> {
             eprintln!("Failed to set window size: {}", e);
         }
         let _ = pet.emit("scale_change", config.scale);
+        let _ = pet.emit("fps_limit_change", config.fps_limit);
         let _ = pet.emit("colors_change", config.colors);
     }
     Ok(())

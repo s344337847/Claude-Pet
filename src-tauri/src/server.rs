@@ -17,7 +17,7 @@ pub struct ServerState {
 
 #[derive(Deserialize)]
 pub struct EventBody {
-    pub task_id: Option<String>,
+    pub session_id: Option<String>,
 }
 
 async fn handle_event(
@@ -25,8 +25,8 @@ async fn handle_event(
     Path(event): Path<String>,
     body: Option<Json<EventBody>>,
 ) -> impl IntoResponse {
-    let task_id = body.and_then(|b| b.task_id.clone());
-    state.pet_manager.handle_event(event, task_id);
+    let session_id = body.and_then(|b| b.session_id.clone());
+    state.pet_manager.handle_event(event, session_id);
     StatusCode::OK
 }
 

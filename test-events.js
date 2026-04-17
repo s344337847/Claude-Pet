@@ -5,15 +5,15 @@ function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-async function sendEvent(event, taskId) {
+async function sendEvent(event, sessionId) {
   try {
-    const body = taskId ? JSON.stringify({ task_id: taskId }) : undefined;
+    const body = sessionId ? JSON.stringify({ session_id: sessionId }) : undefined;
     const res = await fetch(`${BASE_URL}/v1/event/${event}`, {
       method: "POST",
       headers: body ? { "Content-Type": "application/json" } : undefined,
       body,
     });
-    console.log(`Sent ${event}${taskId ? ` (task_id=${taskId})` : ""}:`, res.status);
+    console.log(`Sent ${event}${sessionId ? ` (session_id=${sessionId})` : ""}:`, res.status);
   } catch (err) {
     console.error(`Failed to send ${event}:`, err.message);
   }
@@ -30,18 +30,18 @@ async function main() {
   await sendEvent("success");
   await sleep(5000);
 
-  console.log("3. Multi-pet: work events for task-1 and task-2");
-  await sendEvent("work", "task-1");
+  console.log("3. Multi-pet: work events for session-1 and session-2");
+  await sendEvent("work", "session-1");
   await sleep(500);
-  await sendEvent("work", "task-2");
+  await sendEvent("work", "session-2");
   await sleep(3000);
 
-  console.log("4. task-1 success -> expect task-1 pet celebrates and closes after ~2s");
-  await sendEvent("success", "task-1");
+  console.log("4. session-1 success -> expect session-1 pet celebrates and closes after ~2s");
+  await sendEvent("success", "session-1");
   await sleep(4000);
 
-  console.log("5. task-2 fail -> expect task-2 pet frowns and closes after ~2s");
-  await sendEvent("fail", "task-2");
+  console.log("5. session-2 fail -> expect session-2 pet frowns and closes after ~2s");
+  await sendEvent("fail", "session-2");
   await sleep(4000);
 
   console.log("6. Session lifecycle: session_start -> expect new pet slides up and enters");

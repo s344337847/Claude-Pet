@@ -11,12 +11,14 @@ interface Colors {
 interface Config {
   scale: number;
   size_preset: string;
+  fps_limit: number;
   colors: Colors;
 }
 
 let currentConfig: Config = {
   scale: 4,
   size_preset: "medium",
+  fps_limit: 60,
   colors: {
     primary: "#6b8cff",
     work: "#ffaa44",
@@ -40,6 +42,10 @@ const colorSleep = document.getElementById("color-sleep") as HTMLInputElement;
 const toggleAdvanced = document.getElementById("toggle-advanced") as HTMLButtonElement;
 const advancedColors = document.getElementById("advanced-colors") as HTMLDivElement;
 const btnResetColors = document.getElementById("btn-reset-colors") as HTMLButtonElement;
+const btnFps15 = document.getElementById("btn-fps-15") as HTMLButtonElement;
+const btnFps30 = document.getElementById("btn-fps-30") as HTMLButtonElement;
+const btnFps60 = document.getElementById("btn-fps-60") as HTMLButtonElement;
+const btnFps0 = document.getElementById("btn-fps-0") as HTMLButtonElement;
 
 const hexPrimary = document.getElementById("hex-primary") as HTMLSpanElement;
 const hexWork = document.getElementById("hex-work") as HTMLSpanElement;
@@ -59,6 +65,21 @@ function updateSizeUI() {
   else if (s === 6) btnLarge.classList.add("active");
 }
 
+function updateFpsUI() {
+  const fps = currentConfig.fps_limit;
+  [btnFps15, btnFps30, btnFps60, btnFps0].forEach((b) => b.classList.remove("active"));
+  if (fps === 15) btnFps15.classList.add("active");
+  else if (fps === 30) btnFps30.classList.add("active");
+  else if (fps === 60) btnFps60.classList.add("active");
+  else if (fps === 0) btnFps0.classList.add("active");
+}
+
+function applyFps(fps: number) {
+  currentConfig.fps_limit = fps;
+  updateFpsUI();
+  invoke("save_config", { config: currentConfig }).catch(console.error);
+}
+
 function applyScale(s: number) {
   currentConfig.scale = s;
   currentConfig.size_preset = s === 2 ? "small" : s === 4 ? "medium" : s === 6 ? "large" : "custom";
@@ -69,6 +90,11 @@ function applyScale(s: number) {
 btnSmall.addEventListener("click", () => applyScale(2));
 btnMedium.addEventListener("click", () => applyScale(4));
 btnLarge.addEventListener("click", () => applyScale(6));
+
+btnFps15.addEventListener("click", () => applyFps(15));
+btnFps30.addEventListener("click", () => applyFps(30));
+btnFps60.addEventListener("click", () => applyFps(60));
+btnFps0.addEventListener("click", () => applyFps(0));
 
 elScaleRange.addEventListener("input", () => {
   applyScale(parseInt(elScaleRange.value, 10));
@@ -144,6 +170,7 @@ async function init() {
   const cfg = await invoke<Config>("get_config");
   currentConfig = cfg;
   updateSizeUI();
+  updateFpsUI();
   updateColorsUI();
 }
 

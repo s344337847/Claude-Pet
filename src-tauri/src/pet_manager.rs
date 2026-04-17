@@ -5,7 +5,7 @@ use tauri::{Emitter, Manager};
 
 pub struct PetInstance {
     pub label: String,
-    pub task_id: Option<String>,
+    pub session_id: Option<String>,
 }
 
 pub struct PetManager {
@@ -23,7 +23,7 @@ impl PetManager {
         manager
     }
 
-    pub fn handle_event(self: &Arc<Self>, event: String, task_id: Option<String>) {
+    pub fn handle_event(self: &Arc<Self>, event: String, session_id: Option<String>) {
         let new_state = match event.as_str() {
             "work" => PetState::Work,
             "success" => PetState::Success,
@@ -34,13 +34,13 @@ impl PetManager {
             _ => PetState::Idle,
         };
 
-        let label = if let Some(ref tid) = task_id {
+        let label = if let Some(ref sid) = session_id {
             let pets = self.pets.lock().unwrap();
-            if !pets.contains_key(tid) {
+            if !pets.contains_key(sid) {
                 drop(pets);
-                self.create_pet(Some(tid.clone()));
+                self.create_pet(Some(sid.clone()));
             }
-            tid.clone()
+            sid.clone()
         } else {
             "default_pet".to_string()
         };
@@ -55,19 +55,19 @@ impl PetManager {
         let _ = self.app_handle.emit("pet_state_change", payload);
 
         if matches!(new_state, PetState::Success | PetState::Fail | PetState::Exit) {
-            if let Some(ref tid) = task_id {
+            if let Some(ref sid) = session_id {
                 let manager = self.clone();
-                let tid = tid.clone();
+                let sid = sid.clone();
                 tauri::async_runtime::spawn(async move {
                     tokio::time::sleep(tokio::time::Duration::from_secs(2)).await;
-                    manager.destroy_pet(tid);
+                    manager.destroy_pet(sid);
                 });
             }
         }
     }
 
-    pub fn create_pet(self: &Arc<Self>, task_id: Option<String>) -> String {
-        let label = task_id.clone().unwrap_or_else(|| "default_pet".to_string());
+    pub fn create_pet(self: &Arc<Self>, session_id: Option<String>) -> String {
+        let label = session_id.clone().unwrap_or_else(|| "default_pet".to_string());
         {
             let mut pets = self.pets.lock().unwrap();
             if pets.contains_key(&label) {
@@ -77,7 +77,7 @@ impl PetManager {
                 label.clone(),
                 PetInstance {
                     label: label.clone(),
-                    task_id,
+                    session_id,
                 },
             );
         }
