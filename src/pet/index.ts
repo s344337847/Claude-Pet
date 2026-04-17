@@ -26,6 +26,7 @@ let returnVelocityX = 0;
 let returnVelocityY = 0;
 const RETURN_GRAVITY = 0.6;
 const RETURN_JUMP_VELOCITY = -15;
+const SLIDE_SPEED = 10; // physical pixels per frame
 
 const pet = new Pet(defaultStyle, scale, ctx);
 
@@ -80,6 +81,32 @@ function updateWalk() {
     return;
   }
 
+  if (state === 'exit') {
+    const targetY = screenH;
+    if (winY < targetY) {
+      winY += SLIDE_SPEED;
+      if (winY > targetY) winY = targetY;
+    }
+    win.setPosition(new PhysicalPosition(Math.round(winX), Math.round(winY)));
+    return;
+  }
+
+  if (state === 'enter') {
+    const targetY = screenH - physSize - BOTTOM_OFFSET;
+    if (winY < targetY) {
+      winY += SLIDE_SPEED;
+      if (winY > targetY) winY = targetY;
+    } else if (winY > targetY) {
+      winY -= SLIDE_SPEED;
+      if (winY < targetY) winY = targetY;
+    }
+    win.setPosition(new PhysicalPosition(Math.round(winX), Math.round(winY)));
+    if (winY === targetY) {
+      pet.setState('idle');
+    }
+    return;
+  }
+
   if (state === 'returning') {
     winX += returnVelocityX;
     winY += returnVelocityY;
@@ -126,6 +153,9 @@ function updateWalk() {
 
 listen<{ label: string; state: PetState }>('pet_state_change', (event) => {
   if (event.payload.label === label) {
+    if (event.payload.state === 'enter') {
+      winY = screenH; // start just below visible area
+    }
     pet.setState(event.payload.state);
   }
 });
