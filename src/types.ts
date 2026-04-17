@@ -1,1 +1,1 @@
-export type PetState = 'idle' | 'walk' | 'work' | 'success' | 'fail' | 'sleep' | 'returning';
+export type PetState = 'idle' | 'walk' | 'work' | 'success' | 'fail' | 'sleep' | 'returning' | 'enter' | 'exit';
