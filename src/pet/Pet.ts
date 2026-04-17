@@ -1,4 +1,4 @@
-import type { StyleConfig } from './styles/types';
+import type { StyleConfig, StyleColors } from './styles/types';
 import type { PetState } from '../types';
 import type { Action } from './actions/types';
 import { IdleAction, WalkAction, WorkAction, SuccessAction, FailAction, SleepAction, ReturningAction } from './actions';
@@ -41,6 +41,10 @@ export class Pet {
   getFrame() { return this.frame; }
   getStyle() { return this.style; }
   getCurrentState() { return this.currentState; }
+
+  setColors(colors: StyleColors) {
+    this.style = { ...this.style, colors };
+  }
 
   transitionTo(state: PetState) {
     this.setState(state);
