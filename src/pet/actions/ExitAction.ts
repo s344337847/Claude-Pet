@@ -7,11 +7,11 @@ export class ExitAction implements Action {
   private timer = 0;
   private readonly DURATION = 45;
 
-  onEnter(pet: Pet) {
+  onEnter(_pet: Pet) {
     this.timer = 0;
   }
 
-  update(pet: Pet) {
+  update(_pet: Pet) {
     this.timer++;
     // No auto-transition; backend destroys window after delay
   }
@@ -28,6 +28,6 @@ export class ExitAction implements Action {
     renderer.drawLegs(style, color, offsetY, 0);
   }
 
-  onExit(pet: Pet) {}
-  shouldExit(pet: Pet) { return false; }
+  onExit(_pet: Pet) {}
+  shouldExit(_pet: Pet) { return false; }
 }

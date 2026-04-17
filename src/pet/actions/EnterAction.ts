@@ -7,7 +7,7 @@ export class EnterAction implements Action {
   private timer = 0;
   private readonly DURATION = 40;
 
-  onEnter(pet: Pet) {
+  onEnter(_pet: Pet) {
     this.timer = 0;
   }
 
@@ -39,6 +39,6 @@ export class EnterAction implements Action {
     }
   }
 
-  onExit(pet: Pet) {}
-  shouldExit(pet: Pet) { return false; }
+  onExit(_pet: Pet) {}
+  shouldExit(_pet: Pet) { return false; }
 }
