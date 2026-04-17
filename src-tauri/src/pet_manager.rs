@@ -1,10 +1,15 @@
+use crate::config::Config;
 use crate::state::{PetState, StatePayload};
 use fastrand;
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 use tauri::{Emitter, Manager};
+use tauri_plugin_store::StoreExt;
 
 const STYLE_NAMES: &[&str] = &["default-cat", "dog"];
+const STORE_PATH: &str = "config.json";
+const CONFIG_KEY: &str = "config";
+const BASE_LOGICAL_SIZE: f64 = 32.0;
 
 pub struct PetInstance {
     pub label: String,
@@ -19,13 +24,11 @@ pub struct PetManager {
 
 impl PetManager {
     pub fn new(app_handle: tauri::AppHandle) -> Arc<Self> {
-        let manager = Arc::new(Self {
+        Arc::new(Self {
             pets: Mutex::new(HashMap::new()),
             style_counts: Mutex::new(HashMap::new()),
             app_handle: app_handle.clone(),
-        });
-        manager.create_pet(None);
-        manager
+        })
     }
 
     fn pick_style(&self) -> String {
@@ -61,15 +64,15 @@ impl PetManager {
             _ => PetState::Idle,
         };
 
-        let label = if let Some(ref sid) = session_id {
+        let Some(ref sid) = session_id else { return; };
+
+        let label = {
             let pets = self.pets.lock().unwrap();
             if !pets.contains_key(sid) {
                 drop(pets);
                 self.create_pet(Some(sid.clone()));
             }
             sid.clone()
-        } else {
-            "default_pet".to_string()
         };
 
         let payload = StatePayload {
@@ -81,20 +84,18 @@ impl PetManager {
 
         let _ = self.app_handle.emit("pet_state_change", payload);
 
-        if matches!(new_state, PetState::Success | PetState::Fail | PetState::Exit) {
-            if let Some(ref sid) = session_id {
-                let manager = self.clone();
-                let sid = sid.clone();
-                tauri::async_runtime::spawn(async move {
-                    tokio::time::sleep(tokio::time::Duration::from_secs(2)).await;
-                    manager.destroy_pet(sid);
-                });
-            }
+        if matches!(new_state, PetState::Exit) {
+            let manager = self.clone();
+            let sid = sid.clone();
+            tauri::async_runtime::spawn(async move {
+                tokio::time::sleep(tokio::time::Duration::from_secs(2)).await;
+                manager.destroy_pet(sid);
+            });
         }
     }
 
     pub fn create_pet(self: &Arc<Self>, session_id: Option<String>) -> String {
-        let label = session_id.clone().unwrap_or_else(|| "default_pet".to_string());
+        let label = session_id.clone().expect("create_pet requires a session_id");
         let style_name = self.pick_style();
         {
             let mut pets = self.pets.lock().unwrap();
@@ -116,13 +117,21 @@ impl PetManager {
         let manager = self.clone();
         tauri::async_runtime::spawn(async move {
             let label_for_event = window_label.clone();
+            let config: Config = match app_handle.store(STORE_PATH) {
+                Ok(store) => match store.get(CONFIG_KEY) {
+                    Some(v) => serde_json::from_value(v).unwrap_or_default(),
+                    None => Config::default(),
+                },
+                Err(_) => Config::default(),
+            };
+            let logical_size = (BASE_LOGICAL_SIZE * config.scale as f64) as u32;
             if let Ok(window) = tauri::WebviewWindowBuilder::new(
                 &app_handle,
                 window_label,
                 tauri::WebviewUrl::App("index.html".into()),
             )
             .title("Claude Pet")
-            .inner_size(128.0, 128.0)
+            .inner_size(logical_size as f64, logical_size as f64)
             .decorations(false)
             .transparent(true)
             .always_on_top(true)
@@ -132,7 +141,7 @@ impl PetManager {
             .build()
             {
                 let _ = window.set_ignore_cursor_events(true);
-                crate::position_window_bottom_right(&window, 128);
+                crate::position_window_bottom_right(&window, logical_size);
                 manager.commit_style(&style_for_event);
                 let _ = app_handle.emit(
                     "pet_style_init",
@@ -148,9 +157,6 @@ impl PetManager {
     }
 
     pub fn destroy_pet(self: &Arc<Self>, label: String) {
-        if label == "default_pet" {
-            return;
-        }
         {
             let mut pets = self.pets.lock().unwrap();
             pets.remove(&label);

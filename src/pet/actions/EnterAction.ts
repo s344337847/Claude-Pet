@@ -4,16 +4,15 @@ import type { PetRenderer } from '../renderer/PetRenderer';
 
 export class EnterAction implements Action {
   readonly name = 'enter';
-  private timer = 0;
-  private readonly DURATION = 40;
+  private startTime = 0;
+  private readonly DURATION_MS = 2000;
 
   onEnter(_pet: Pet) {
-    this.timer = 0;
+    this.startTime = performance.now();
   }
 
   update(pet: Pet) {
-    this.timer++;
-    if (this.timer >= this.DURATION) {
+    if (performance.now() - this.startTime >= this.DURATION_MS) {
       pet.transitionTo('idle');
     }
   }

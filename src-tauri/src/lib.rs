@@ -41,14 +41,18 @@ fn save_config(app: tauri::AppHandle, config: Config) -> Result<(), String> {
     let store = app.store(STORE_PATH).map_err(|e| e.to_string())?;
     store.set(CONFIG_KEY, serde_json::to_value(&config).map_err(|e| e.to_string())?);
 
-    if let Some(pet) = app.get_webview_window("default_pet") {
+    for (_, window) in app.webview_windows() {
+        let label = window.label();
+        if label == "main" || label == "settings" {
+            continue;
+        }
         let size = (BASE_LOGICAL_SIZE * config.scale as f64) as u32;
-        if let Err(e) = pet.set_size(tauri::Size::Logical(tauri::LogicalSize::new(size as f64, size as f64))) {
+        if let Err(e) = window.set_size(tauri::Size::Logical(tauri::LogicalSize::new(size as f64, size as f64))) {
             eprintln!("Failed to set window size: {}", e);
         }
-        let _ = pet.emit("scale_change", config.scale);
-        let _ = pet.emit("fps_limit_change", config.fps_limit);
-        let _ = pet.emit("colors_change", config.colors);
+        let _ = window.emit("scale_change", config.scale);
+        let _ = window.emit("fps_limit_change", config.fps_limit);
+        let _ = window.emit("colors_change", &config.colors);
     }
     Ok(())
 }
@@ -118,15 +122,25 @@ pub fn run() {
                 .menu(&menu)
                 .show_menu_on_left_click(true)
                 .on_menu_event(|app: &tauri::AppHandle, event| {
+                    fn first_pet_window(app: &tauri::AppHandle) -> Option<tauri::WebviewWindow> {
+                        for (_, window) in app.webview_windows() {
+                            let label = window.label();
+                            if label != "main" && label != "settings" {
+                                return Some(window);
+                            }
+                        }
+                        None
+                    }
+
                     match event.id.as_ref() {
                         "show" => {
-                            if let Some(w) = app.get_webview_window("default_pet") {
+                            if let Some(w) = first_pet_window(app) {
                                 let _ = w.show();
                                 let _ = w.set_focus();
                             }
                         }
                         "hide" => {
-                            if let Some(w) = app.get_webview_window("default_pet") {
+                            if let Some(w) = first_pet_window(app) {
                                 let _ = w.hide();
                             }
                         }
@@ -137,7 +151,7 @@ pub fn run() {
                             }
                         }
                         "reset" => {
-                            if let Some(w) = app.get_webview_window("default_pet") {
+                            if let Some(w) = first_pet_window(app) {
                                 let sf = w.scale_factor().unwrap_or(1.0);
                                 let size = w.inner_size()
                                     .map(|s| (s.width as f64 / sf) as u32)

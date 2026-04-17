@@ -5,6 +5,5 @@ export { WorkAction } from './WorkAction';
 export { SuccessAction } from './SuccessAction';
 export { FailAction } from './FailAction';
 export { SleepAction } from './SleepAction';
-export { ReturningAction } from './ReturningAction';
 export { EnterAction } from './EnterAction';
 export { ExitAction } from './ExitAction';

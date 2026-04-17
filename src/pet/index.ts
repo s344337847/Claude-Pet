@@ -22,10 +22,6 @@ let walkSpeed = 2;     // physical pixels per frame
 let stateTimer = 0;
 const MARGIN = 10;     // physical pixels
 const BOTTOM_OFFSET = 50; // physical pixels, matches Rust
-let returnVelocityX = 0;
-let returnVelocityY = 0;
-const RETURN_GRAVITY = 0.6;
-const RETURN_JUMP_VELOCITY = -15;
 const SLIDE_SPEED = 10; // physical pixels per frame
 
 let targetFps = 60;
@@ -70,20 +66,9 @@ async function initConfig() {
 
 function updateWalk() {
   const state = pet.getCurrentState();
-  if (state === 'work') return;
+  if (state === 'work' || state === 'success' || state === 'fail') return;
 
   const physSize = logicalToPhysical(32 * scale);
-
-  if (state === 'success') {
-    const targetX = Math.floor((screenW - physSize) / 2);
-    const targetY = Math.floor((screenH - physSize) / 2) - 100;
-    winX += (targetX - winX) * 0.1;
-    winY += (targetY - winY) * 0.1;
-    if (Math.abs(targetX - winX) < 1) winX = targetX;
-    if (Math.abs(targetY - winY) < 1) winY = targetY;
-    win.setPosition(new PhysicalPosition(Math.round(winX), Math.round(winY)));
-    return;
-  }
 
   if (state === 'exit') {
     const targetY = screenH;
@@ -108,31 +93,6 @@ function updateWalk() {
     if (winY === targetY) {
       pet.setState('idle');
     }
-    return;
-  }
-
-  if (state === 'returning') {
-    winX += returnVelocityX;
-    winY += returnVelocityY;
-    returnVelocityY += RETURN_GRAVITY;
-
-    const floorY = screenH - physSize - BOTTOM_OFFSET;
-
-    if (winY >= floorY) {
-      winY = floorY;
-      if (returnVelocityY > 0 && Math.abs(returnVelocityY) > 2) {
-        returnVelocityY = -returnVelocityY * 0.4;
-        returnVelocityX *= 0.8;
-      } else {
-        winX = Math.round(winX);
-        winY = Math.round(winY);
-        pet.setState('idle');
-        returnVelocityX = 0;
-        returnVelocityY = 0;
-      }
-    }
-
-    win.setPosition(new PhysicalPosition(Math.round(winX), Math.round(winY)));
     return;
   }
 
@@ -192,12 +152,6 @@ listen<number>('scale_change', async (event) => {
 
   applyScale(newScale);
 
-  if (pet.getCurrentState() === 'returning') {
-    pet.setState('idle');
-    returnVelocityX = 0;
-    returnVelocityY = 0;
-  }
-
   const oldPhysSize = Math.round(32 * oldScale * scaleFactor);
   const newPhysSize = Math.round(32 * newScale * scaleFactor);
 
@@ -223,18 +177,7 @@ function tick(timestamp: number) {
     stateTimer++;
     if (stateTimer > 120) {
       stateTimer = 0;
-      if (state === 'success') {
-        const physSize = logicalToPhysical(32 * scale);
-        const targetX = MARGIN + Math.random() * (screenW - physSize - MARGIN * 2);
-        const distanceX = targetX - winX;
-        const framesToTarget = 45 + Math.random() * 15;
-        returnVelocityX = distanceX / framesToTarget;
-        returnVelocityY = RETURN_JUMP_VELOCITY;
-        pet.setState('returning');
-      } else {
-        pet.setState('idle');
-        winY = screenH - logicalToPhysical(32 * scale) - BOTTOM_OFFSET;
-      }
+      pet.setState('idle');
     }
   }
 

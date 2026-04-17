@@ -9,7 +9,6 @@ pub enum PetState {
     Success,
     Fail,
     Sleep,
-    Returning,
     Enter,
     Exit,
 }

@@ -22,5 +22,3 @@ listen<PetStateEvent>('pet_state_change', async (event) => {
 listen<string>('destroy_pet', (event) => {
   knownPets.delete(event.payload);
 });
-
-ensurePetWindow('default_pet');
