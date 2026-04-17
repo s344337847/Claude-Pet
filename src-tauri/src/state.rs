@@ -19,4 +19,5 @@ pub struct StatePayload {
     pub label: String,
     pub task_count: usize,
     pub in_progress_count: usize,
+    pub cwd: Option<String>,
 }

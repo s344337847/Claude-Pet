@@ -59,7 +59,7 @@ fn save_config(app: tauri::AppHandle, config: Config) -> Result<(), String> {
 
 #[tauri::command]
 fn create_pet_window(label: String, state: tauri::State<Arc<PetManager>>) {
-    state.create_pet(Some(label), None);
+    state.create_pet(Some(label), None, None);
 }
 
 #[tauri::command]

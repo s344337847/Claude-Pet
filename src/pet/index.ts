@@ -115,12 +115,49 @@ function updateWalk() {
   }
 }
 
-listen<{ label: string; state: PetState }>('pet_state_change', (event) => {
+const tooltipEl = document.getElementById('pet-tooltip') as HTMLDivElement;
+let typewriterTimer: ReturnType<typeof setTimeout> | null = null;
+
+function clearTooltip() {
+  if (typewriterTimer) {
+    clearTimeout(typewriterTimer);
+    typewriterTimer = null;
+  }
+  tooltipEl.textContent = '';
+  tooltipEl.classList.remove('visible', 'typing-done');
+}
+
+function showTypewriter(text: string) {
+  clearTooltip();
+  tooltipEl.classList.add('visible');
+  let index = 0;
+  tooltipEl.classList.remove('typing-done');
+
+  function typeNext() {
+    if (index <= text.length) {
+      tooltipEl.textContent = text.slice(0, index);
+      index++;
+      typewriterTimer = setTimeout(typeNext, 40);
+    } else {
+      tooltipEl.classList.add('typing-done');
+      typewriterTimer = null;
+    }
+  }
+  typeNext();
+}
+
+listen<{ label: string; state: PetState; cwd?: string }>('pet_state_change', (event) => {
   if (event.payload.label === label) {
-    if (event.payload.state === 'enter') {
+    const newState = event.payload.state;
+    if (newState === 'enter') {
       winY = screenH; // start just below visible area
     }
-    pet.setState(event.payload.state);
+    if (newState === 'success' && event.payload.cwd) {
+      showTypewriter(event.payload.cwd);
+    } else if (newState === 'work') {
+      clearTooltip();
+    }
+    pet.setState(newState);
   }
 });
 

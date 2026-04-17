@@ -5,15 +5,18 @@ function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-async function sendEvent(event, sessionId) {
+async function sendEvent(event, sessionId, cwd) {
   try {
-    const body = sessionId ? JSON.stringify({ session_id: sessionId }) : undefined;
+    const payload = {};
+    if (sessionId) payload.session_id = sessionId;
+    if (cwd) payload.cwd = cwd;
+    const body = Object.keys(payload).length > 0 ? JSON.stringify(payload) : undefined;
     const res = await fetch(`${BASE_URL}/v1/event/${event}`, {
       method: "POST",
       headers: body ? { "Content-Type": "application/json" } : undefined,
       body,
     });
-    console.log(`Sent ${event}${sessionId ? ` (session_id=${sessionId})` : ""}:`, res.status);
+    console.log(`Sent ${event}${sessionId ? ` (session_id=${sessionId})` : ""}${cwd ? ` (cwd=${cwd})` : ""}:`, res.status);
   } catch (err) {
     console.error(`Failed to send ${event}:`, err.message);
   }

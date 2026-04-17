@@ -53,7 +53,7 @@ impl PetManager {
         *counts.entry(style_name.to_string()).or_insert(0) += 1;
     }
 
-    pub fn handle_event(self: &Arc<Self>, event: String, session_id: Option<String>) {
+    pub fn handle_event(self: &Arc<Self>, event: String, session_id: Option<String>, cwd: Option<String>) {
         let new_state = match event.as_str() {
             "work" => PetState::Work,
             "success" => PetState::Success,
@@ -84,7 +84,7 @@ impl PetManager {
             } else {
                 Some(new_state.clone())
             };
-            self.create_pet(Some(sid.clone()), follow_up);
+            self.create_pet(Some(sid.clone()), follow_up, cwd.clone());
         } else {
             // 宠物已存在，直接发送目标状态
             let payload = StatePayload {
@@ -92,6 +92,7 @@ impl PetManager {
                 label: sid.clone(),
                 task_count: 0,
                 in_progress_count: 0,
+                cwd: cwd.clone(),
             };
             let _ = self.app_handle.emit("pet_state_change", payload);
         }
@@ -110,6 +111,7 @@ impl PetManager {
         self: &Arc<Self>,
         session_id: Option<String>,
         follow_up_state: Option<PetState>,
+        cwd: Option<String>,
     ) -> String {
         let label = session_id.clone().expect("create_pet requires a session_id");
         let style_name = self.pick_style();
@@ -175,6 +177,7 @@ impl PetManager {
                         label: label_for_event.clone(),
                         task_count: 0,
                         in_progress_count: 0,
+                        cwd: cwd.clone(),
                     },
                 );
                 // 如果有后续状态，等入场动画结束后发送
@@ -187,6 +190,7 @@ impl PetManager {
                             label: label_for_event,
                             task_count: 0,
                             in_progress_count: 0,
+                            cwd: cwd.clone(),
                         },
                     );
                 }

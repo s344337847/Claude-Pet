@@ -23,3 +23,44 @@ canvas {
   height: 128px;
   image-rendering: pixelated;
 }
+
+.pet-tooltip {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-bottom: 6px;
+  padding: 4px 8px;
+  background: rgba(30, 30, 30, 0.92);
+  color: #fff;
+  font-size: 11px;
+  font-family: 'Courier New', Courier, monospace;
+  border-radius: 4px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pet-tooltip.visible {
+  opacity: 1;
+}
+
+.pet-tooltip::after {
+  content: '|';
+  animation: tooltip-cursor-blink 1s step-end infinite;
+  color: #0f0;
+}
+
+.pet-tooltip.typing-done::after {
+  display: none;
+}
+
+@keyframes tooltip-cursor-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
