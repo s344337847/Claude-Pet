@@ -29,6 +29,8 @@ impl PetManager {
             "success" => PetState::Success,
             "fail" => PetState::Fail,
             "sleep" => PetState::Sleep,
+            "session_start" => PetState::Enter,
+            "session_end" => PetState::Exit,
             _ => PetState::Idle,
         };
 
@@ -52,7 +54,7 @@ impl PetManager {
 
         let _ = self.app_handle.emit("pet_state_change", payload);
 
-        if matches!(new_state, PetState::Success | PetState::Fail) {
+        if matches!(new_state, PetState::Success | PetState::Fail | PetState::Exit) {
             if let Some(ref tid) = task_id {
                 let manager = self.clone();
                 let tid = tid.clone();
