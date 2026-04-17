@@ -10,6 +10,8 @@ pub enum PetState {
     Fail,
     Sleep,
     Returning,
+    Enter,
+    Exit,
 }
 
 #[derive(Debug, Clone, Serialize)]
