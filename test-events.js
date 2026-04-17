@@ -44,6 +44,14 @@ async function main() {
   await sendEvent("fail", "task-2");
   await sleep(4000);
 
+  console.log("6. Session lifecycle: session_start -> expect new pet slides up and enters");
+  await sendEvent("session_start", "test-session");
+  await sleep(3000);
+
+  console.log("7. session_end -> expect test-session pet sinks and slides down, then closes after ~2s");
+  await sendEvent("session_end", "test-session");
+  await sleep(4000);
+
   console.log("\nTest complete.");
 }
 
