@@ -63,6 +63,7 @@ export class Pet {
 
   tick() {
     this.frame++;
+    this.renderer.setFrame(this.frame);
     this.action.update(this);
     this.renderer.clear();
     this.action.render(this.renderer, this);

@@ -1,10 +1,16 @@
 import type { StyleConfig, PixelPoint, PixelRect } from '../styles/types';
 
 export class PetRenderer {
+  private frame = 0;
+
   constructor(private ctx: CanvasRenderingContext2D, private scale: number) {}
 
   setScale(scale: number) {
     this.scale = scale;
+  }
+
+  setFrame(f: number) {
+    this.frame = f;
   }
 
   clear() {
@@ -31,7 +37,22 @@ export class PetRenderer {
     this.rect({ ...style.body.head, y: style.body.head.y + offsetY }, color);
     this.points(style.body.ears, color, offsetY);
     this.rect({ ...style.body.bodyRect, y: style.body.bodyRect.y + offsetY }, color);
-    this.points(style.body.tail, color, offsetY);
+
+    const isLongTail = style.body.tail.length >= 4;
+    const tailLen = style.body.tail.length;
+    const tailOffset = isLongTail
+      ? Math.round(Math.sin(this.frame * 0.3) * 2)
+      : 0;
+    for (let i = 0; i < tailLen; i++) {
+      const p = style.body.tail[i];
+      let xOff = 0;
+      if (isLongTail) {
+        xOff = tailOffset;
+      } else if (i === tailLen - 1) {
+        xOff = (this.frame % 20 < 10 ? 0 : 1);
+      }
+      this.pixel(p.x + xOff, p.y + offsetY, color);
+    }
   }
 
   drawFace(style: StyleConfig, offsetY: number, eyeOpen: boolean, mouth: 'smile' | 'neutral' | 'frown', eyeColorHex: string) {
@@ -45,6 +66,9 @@ export class PetRenderer {
       this.rect({ ...style.face.eyeRight, y: style.face.eyeRight.y + offsetY + 1 }, eyeColor);
     }
     this.points(style.face.mouth[mouth], '#334', offsetY);
+    if (mouth === 'smile' && style.face.tongue) {
+      this.points(style.face.tongue, '#e67a7a', offsetY);
+    }
   }
 
   drawLegs(style: StyleConfig, color: string, offsetY: number, frameNum: number) {
