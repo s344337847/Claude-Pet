@@ -162,6 +162,7 @@ impl PetManager {
                 Err(_) => Config::default(),
             };
             let logical_size = (BASE_LOGICAL_SIZE * config.scale as f64) as u32;
+            let monitor_name = config.monitor.clone();
             if let Ok(window) = tauri::WebviewWindowBuilder::new(
                 &app_handle,
                 window_label,
@@ -179,7 +180,7 @@ impl PetManager {
             .build()
             {
                 let _ = window.set_ignore_cursor_events(true);
-                crate::position_window_bottom_right(&window, logical_size);
+                crate::position_window_on_monitor(&window, logical_size, monitor_name.as_deref());
                 let _ = app_handle.emit(
                     "pet_style_init",
                     serde_json::json!({

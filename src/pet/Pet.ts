@@ -48,7 +48,8 @@ export class Pet {
   }
 
   setStyle(style: StyleConfig) {
-    this.style = style;
+    // Preserve user-configured colors; only swap pixel geometry
+    this.style = { ...style, colors: this.style.colors };
   }
 
   transitionTo(state: PetState) {

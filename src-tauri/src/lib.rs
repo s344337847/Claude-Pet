@@ -11,8 +11,31 @@ use tauri::tray::TrayIconBuilder;
 use tauri::{Emitter, Manager, WebviewWindow};
 use tauri_plugin_store::StoreExt;
 
-pub(crate) fn position_window_bottom_right(window: &WebviewWindow, logical_size: u32) {
-    if let Some(monitor) = window.current_monitor().ok().flatten() {
+pub(crate) fn find_monitor(
+    app_handle: &tauri::AppHandle,
+    monitor_name: Option<&str>,
+) -> Option<tauri::Monitor> {
+    if let Some(name) = monitor_name {
+        if let Ok(monitors) = app_handle.available_monitors() {
+            for m in monitors {
+                if m.name().map(|n| n == name).unwrap_or(false) {
+                    return Some(m);
+                }
+            }
+        }
+    }
+    app_handle.primary_monitor().ok().flatten()
+}
+
+pub(crate) fn position_window_on_monitor(
+    window: &WebviewWindow,
+    logical_size: u32,
+    monitor_name: Option<&str>,
+) {
+    let monitor = find_monitor(window.app_handle(), monitor_name)
+        .or_else(|| window.current_monitor().ok().flatten());
+
+    if let Some(monitor) = monitor {
         let size = monitor.size();
         let position = monitor.position();
         let scale_factor = monitor.scale_factor();
@@ -22,6 +45,7 @@ pub(crate) fn position_window_bottom_right(window: &WebviewWindow, logical_size:
         let _ = window.set_position(tauri::Position::Physical(tauri::PhysicalPosition::new(x, y)));
     }
 }
+
 
 const STORE_PATH: &str = "config.json";
 const CONFIG_KEY: &str = "config";
@@ -72,12 +96,92 @@ fn list_pets(state: tauri::State<Arc<PetManager>>) -> Vec<pet_manager::PetInstan
     state.list_pets()
 }
 
+#[derive(Debug, Clone, serde::Serialize)]
+struct MonitorInfo {
+    name: String,
+    size: (u32, u32),
+    position: (i32, i32),
+    is_primary: bool,
+}
+
+#[tauri::command]
+fn get_available_monitors(app: tauri::AppHandle) -> Result<Vec<MonitorInfo>, String> {
+    let primary_name = app
+        .primary_monitor()
+        .ok()
+        .flatten()
+        .and_then(|m| m.name().map(|n| n.to_string()));
+    let monitors = app.available_monitors().map_err(|e| e.to_string())?;
+
+    let mut result = Vec::new();
+    for m in monitors {
+        let name = m.name().map(|n| n.clone()).unwrap_or_default();
+        let is_primary = primary_name.as_ref() == Some(&name);
+        result.push(MonitorInfo {
+            name: name.clone(),
+            size: (m.size().width, m.size().height),
+            position: (m.position().x, m.position().y),
+            is_primary,
+        });
+    }
+    Ok(result)
+}
+
+#[tauri::command]
+fn set_monitor(app: tauri::AppHandle, monitor_name: Option<String>) -> Result<(), String> {
+    let store = app.store(STORE_PATH).map_err(|e| e.to_string())?;
+    let mut config: Config = match store.get(CONFIG_KEY) {
+        Some(v) => serde_json::from_value(v).map_err(|e| e.to_string())?,
+        None => Config::default(),
+    };
+
+    config.monitor = monitor_name;
+    store.set(CONFIG_KEY, serde_json::to_value(&config).map_err(|e| e.to_string())?);
+
+    let target_monitor = find_monitor(&app,
+        config.monitor.as_deref());
+
+    for (_, window) in app.webview_windows() {
+        let label = window.label();
+        if label == "main" || label == "settings" || label == "pets" {
+            continue;
+        }
+        let sf = window.scale_factor().unwrap_or(1.0);
+        let size = window
+            .inner_size()
+            .map(|s| (s.width as f64 / sf) as u32)
+            .unwrap_or(128);
+        position_window_on_monitor(&window, size, config.monitor.as_deref());
+
+        if let Some(ref m) = target_monitor {
+            let _ = window.emit(
+                "monitor_changed",
+                serde_json::json!({
+                    "screenW": m.size().width,
+                    "screenH": m.size().height,
+                    "scaleFactor": m.scale_factor(),
+                }),
+            );
+        }
+    }
+
+    Ok(())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_store::Builder::default().build())
-        .invoke_handler(tauri::generate_handler![get_config, save_config, create_pet_window, destroy_pet, list_pets])
+        .invoke_handler(tauri::generate_handler![
+            get_config,
+            save_config,
+            create_pet_window,
+            destroy_pet,
+            list_pets,
+            get_available_monitors,
+            set_monitor
+        ])
         .setup(|app| {
             let main_window = app.get_webview_window("main").expect("main window not found");
             let _ = main_window.set_ignore_cursor_events(true);
@@ -112,15 +216,12 @@ pub fn run() {
             });
 
             // Tray menu
-            let show_i = MenuItemBuilder::new("Show").id("show").build(app)?;
-            let hide_i = MenuItemBuilder::new("Hide").id("hide").build(app)?;
             let settings_i = MenuItemBuilder::new("Settings").id("settings").build(app)?;
             let pets_i = MenuItemBuilder::new("Pet Manager").id("pets").build(app)?;
             let devtools_i = MenuItemBuilder::new("DevTools").id("devtools").build(app)?;
-            let reset_i = MenuItemBuilder::new("Reset Position").id("reset").build(app)?;
             let quit_i = MenuItemBuilder::new("Quit").id("quit").build(app)?;
             let menu = MenuBuilder::new(app)
-                .items(&[&show_i, &hide_i, &settings_i, &pets_i, &devtools_i, &reset_i, &quit_i])
+                .items(&[&settings_i, &pets_i, &devtools_i, &quit_i])
                 .build()?;
 
             let tray_icon = app.default_window_icon().cloned().expect("default window icon not found");
@@ -141,17 +242,6 @@ pub fn run() {
                     }
 
                     match event.id.as_ref() {
-                        "show" => {
-                            if let Some(w) = first_pet_window(app) {
-                                let _ = w.show();
-                                let _ = w.set_focus();
-                            }
-                        }
-                        "hide" => {
-                            if let Some(w) = first_pet_window(app) {
-                                let _ = w.hide();
-                            }
-                        }
                         "settings" => {
                             if let Some(w) = app.get_webview_window("settings") {
                                 let _ = w.show();
@@ -191,15 +281,6 @@ pub fn run() {
                         "devtools" => {
                             if let Some(w) = first_pet_window(app) {
                                 let _ = w.open_devtools();
-                            }
-                        }
-                        "reset" => {
-                            if let Some(w) = first_pet_window(app) {
-                                let sf = w.scale_factor().unwrap_or(1.0);
-                                let size = w.inner_size()
-                                    .map(|s| (s.width as f64 / sf) as u32)
-                                    .unwrap_or(128);
-                                position_window_bottom_right(&w, size);
                             }
                         }
                         "quit" => {

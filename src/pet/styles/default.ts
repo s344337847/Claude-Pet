@@ -3,11 +3,11 @@ import type { StyleConfig } from './types';
 export const defaultStyle: StyleConfig = {
   name: 'default-cat',
   colors: {
-    primary: '#6b8cff',
-    work: '#ffaa44',
-    success: '#6b8cff',
+    primary: '#d77757',
+    work: '#d77757',
+    success: '#d77757',
     fail: '#889999',
-    sleep: '#6b8cff',
+    sleep: '#d77757',
   },
   body: {
     head: { x: 10, y: 6, w: 12, h: 10 },

@@ -8,11 +8,19 @@ interface Colors {
   sleep: string;
 }
 
+interface MonitorInfo {
+  name: string;
+  size: [number, number];
+  position: [number, number];
+  is_primary: boolean;
+}
+
 interface Config {
   scale: number;
   size_preset: string;
   fps_limit: number;
   colors: Colors;
+  monitor: string | null;
 }
 
 let currentConfig: Config = {
@@ -26,6 +34,7 @@ let currentConfig: Config = {
     fail: "#889999",
     sleep: "#6b8cff",
   },
+  monitor: null,
 };
 
 const elScaleRange = document.getElementById("scale-range") as HTMLInputElement;
@@ -166,12 +175,33 @@ btnResetColors.addEventListener("click", () => {
   applyColors();
 });
 
+const elMonitorSelect = document.getElementById("monitor-select") as HTMLSelectElement;
+
+async function loadMonitors() {
+  const monitors = await invoke<MonitorInfo[]>("get_available_monitors");
+  elMonitorSelect.innerHTML = '<option value="">Primary Monitor</option>';
+  for (const m of monitors) {
+    const option = document.createElement("option");
+    option.value = m.name;
+    option.textContent = `${m.name} (${m.size[0]}x${m.size[1]})${m.is_primary ? " [Primary]" : ""}`;
+    elMonitorSelect.appendChild(option);
+  }
+  elMonitorSelect.value = currentConfig.monitor || "";
+}
+
+elMonitorSelect.addEventListener("change", () => {
+  const value = elMonitorSelect.value || null;
+  currentConfig.monitor = value;
+  invoke("set_monitor", { monitorName: value }).catch(console.error);
+});
+
 async function init() {
   const cfg = await invoke<Config>("get_config");
   currentConfig = cfg;
   updateSizeUI();
   updateFpsUI();
   updateColorsUI();
+  await loadMonitors();
 }
 
 init().catch(console.error);

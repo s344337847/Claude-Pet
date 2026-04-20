@@ -262,6 +262,15 @@ listen<number>('scale_change', async (event) => {
   }
 });
 
+listen<{ screenW: number; screenH: number; scaleFactor: number }>('monitor_changed', async (event) => {
+  screenW = event.payload.screenW;
+  screenH = event.payload.screenH;
+  scaleFactor = event.payload.scaleFactor;
+  const pos = await win.outerPosition();
+  winX = pos.x;
+  winY = pos.y;
+});
+
 function tick(timestamp: number) {
   if (targetFps > 0) {
     const minFrameInterval = 1000 / targetFps;

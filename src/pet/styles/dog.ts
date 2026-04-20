@@ -3,11 +3,11 @@ import type { StyleConfig } from './types';
 export const dogStyle: StyleConfig = {
   name: 'dog',
   colors: {
-    primary: '#d4a574',
-    work: '#ffaa44',
-    success: '#6b8cff',
+    primary: '#d77757',
+    work: '#d77777',
+    success: '#d77757',
     fail: '#889999',
-    sleep: '#d4a574',
+    sleep: '#d77757',
   },
   body: {
     head: { x: 9, y: 6, w: 14, h: 10 },

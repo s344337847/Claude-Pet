@@ -15,6 +15,7 @@ pub struct Config {
     pub size_preset: String,
     pub fps_limit: u32,
     pub colors: Colors,
+    pub monitor: Option<String>,
 }
 
 impl Default for Config {
@@ -30,6 +31,7 @@ impl Default for Config {
                 fail: "#889999".to_string(),
                 sleep: "#6b8cff".to_string(),
             },
+            monitor: None,
         }
     }
 }
