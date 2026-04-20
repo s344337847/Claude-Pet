@@ -254,6 +254,9 @@ listen<number>('scale_change', async (event) => {
   await win.setPosition(new PhysicalPosition(Math.round(winX), Math.round(winY)));
 
   if (tooltipExpanded) {
+    // expandWindowForTooltip 会再次减去 tooltip 高度，
+    // 所以先加回来，避免重复偏移
+    winY += Math.round(TOOLTIP_EXTRA_LOGICAL * scaleFactor);
     tooltipExpanded = false;
     await expandWindowForTooltip();
   }
