@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <title>Claude Pet Settings</title>
@@ -15,10 +16,14 @@
       --accent-hover: #5a7aee;
       --radius: 10px;
       --radius-sm: 6px;
-      --shadow: 0 4px 20px rgba(0,0,0,0.35);
+      --shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
     }
 
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, sans-serif;
@@ -61,7 +66,10 @@
       align-items: center;
       margin-bottom: 12px;
     }
-    .row:last-child { margin-bottom: 0; }
+
+    .row:last-child {
+      margin-bottom: 0;
+    }
 
     .segmented {
       display: flex;
@@ -89,7 +97,7 @@
     }
 
     .segmented button:hover {
-      background: rgba(255,255,255,0.04);
+      background: rgba(255, 255, 255, 0.04);
     }
 
     .segmented button.active {
@@ -165,7 +173,10 @@
       padding: 8px 0;
       border-bottom: 1px solid var(--border);
     }
-    .color-row:last-child { border-bottom: none; }
+
+    .color-row:last-child {
+      border-bottom: none;
+    }
 
     .color-label {
       font-size: 13px;
@@ -198,11 +209,15 @@
       overflow: hidden;
     }
 
-    input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
+    input[type="color"]::-webkit-color-swatch-wrapper {
+      padding: 0;
+    }
+
     input[type="color"]::-webkit-color-swatch {
       border: 2px solid var(--border);
       border-radius: 50%;
     }
+
     input[type="color"]::-moz-color-swatch {
       border: 2px solid var(--border);
       border-radius: 50%;
@@ -226,7 +241,7 @@
     }
 
     .advanced-toggle:hover {
-      background: rgba(255,255,255,0.04);
+      background: rgba(255, 255, 255, 0.04);
     }
 
     .advanced-toggle .chevron {
@@ -269,7 +284,7 @@
 
     .btn-subtle:hover {
       color: var(--text);
-      background: rgba(255,255,255,0.04);
+      background: rgba(255, 255, 255, 0.04);
       border-color: #444;
     }
 
@@ -279,30 +294,98 @@
       margin-top: 8px;
       line-height: 1.4;
     }
+
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 40px;
+      height: 22px;
+      flex-shrink: 0;
+    }
+
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .switch .slider {
+      position: absolute;
+      cursor: pointer;
+      inset: 0;
+      background: var(--border);
+      border-radius: 22px;
+      transition: background 0.2s ease;
+    }
+
+    .switch .slider::before {
+      position: absolute;
+      content: "";
+      height: 16px;
+      width: 16px;
+      left: 3px;
+      bottom: 3px;
+      background: var(--text);
+      border-radius: 50%;
+      transition: transform 0.2s ease;
+    }
+
+    .switch input:checked+.slider {
+      background: var(--accent);
+    }
+
+    .switch input:checked+.slider::before {
+      transform: translateX(18px);
+      background: #fff;
+    }
   </style>
 </head>
+
 <body>
-  <h1>Claude Pet Settings</h1>
+  <h1 data-i18n="app-title">Claude Pet Settings</h1>
 
   <div class="section">
-    <div class="section-title">Display</div>
-    <div class="row">
-      <select id="monitor-select" style="width:100%; padding:8px 10px; background:var(--bg); color:var(--text); border:1px solid var(--border); border-radius:var(--radius-sm); font-size:13px; cursor:pointer;">
-        <option value="">Primary Monitor</option>
-      </select>
-    </div>
-    <div class="row">
-      <span class="size-hint" id="monitor-hint">Select which screen to display the pet on.</span>
+    <div class="section-title" data-i18n="section-general">General</div>
+    <div class="row" style="justify-content: space-between;">
+      <span style="font-size: 13px;" data-i18n="autostart-label">Launch on system startup</span>
+      <label class="switch">
+        <input type="checkbox" id="toggle-autostart" />
+        <span class="slider"></span>
+      </label>
     </div>
   </div>
 
   <div class="section">
-    <div class="section-title">Window Size</div>
+    <div class="section-title" data-i18n="section-language">Language</div>
     <div class="row">
       <div class="segmented">
-        <button id="btn-small" data-scale="2">Small</button>
-        <button id="btn-medium" data-scale="4">Medium</button>
-        <button id="btn-large" data-scale="6">Large</button>
+        <button id="btn-lang-en" data-lang="en" data-i18n="lang-en">English</button>
+        <button id="btn-lang-zh" data-lang="zh" data-i18n="lang-zh">中文</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title" data-i18n="section-display">Display</div>
+    <div class="row">
+      <select id="monitor-select"
+        style="width:100%; padding:8px 10px; background:var(--bg); color:var(--text); border:1px solid var(--border); border-radius:var(--radius-sm); font-size:13px; cursor:pointer;">
+        <option value="" data-i18n="monitor-primary">Primary Monitor</option>
+      </select>
+    </div>
+    <div class="row">
+      <span class="size-hint" id="monitor-hint" data-i18n="monitor-hint">Select which screen to display the pet
+        on.</span>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title" data-i18n="section-size">Window Size</div>
+    <div class="row">
+      <div class="segmented">
+        <button id="btn-small" data-scale="2" data-i18n="size-small">Small</button>
+        <button id="btn-medium" data-scale="4" data-i18n="size-medium">Medium</button>
+        <button id="btn-large" data-scale="6" data-i18n="size-large">Large</button>
       </div>
     </div>
     <div class="row slider-row">
@@ -315,24 +398,24 @@
   </div>
 
   <div class="section">
-    <div class="section-title">Performance</div>
+    <div class="section-title" data-i18n="section-performance">Performance</div>
     <div class="row">
       <div class="segmented">
-        <button id="btn-fps-15" data-fps="15">15 FPS</button>
-        <button id="btn-fps-30" data-fps="30">30 FPS</button>
-        <button id="btn-fps-60" data-fps="60">60 FPS</button>
-        <button id="btn-fps-0" data-fps="0">Unlimited</button>
+        <button id="btn-fps-15" data-fps="15" data-i18n="fps-15">15 FPS</button>
+        <button id="btn-fps-30" data-fps="30" data-i18n="fps-30">30 FPS</button>
+        <button id="btn-fps-60" data-fps="60" data-i18n="fps-60">60 FPS</button>
+        <button id="btn-fps-0" data-fps="0" data-i18n="fps-unlimited">Unlimited</button>
       </div>
     </div>
     <div class="row">
-      <span class="size-hint">Lower FPS reduces CPU usage when the pet is visible.</span>
+      <span class="size-hint" data-i18n="performance-hint">Lower FPS reduces CPU usage when the pet is visible.</span>
     </div>
   </div>
 
   <div class="section">
-    <div class="section-title">Appearance</div>
+    <div class="section-title" data-i18n="section-appearance">Appearance</div>
     <div class="color-row">
-      <span class="color-label">Primary</span>
+      <span class="color-label" data-i18n="color-primary">Primary</span>
       <div class="color-value">
         <span class="hex-text" id="hex-primary">#6B8CFF</span>
         <input type="color" id="color-primary" />
@@ -340,47 +423,48 @@
     </div>
 
     <button class="advanced-toggle" id="toggle-advanced">
-      <span>Advanced colors</span>
+      <span data-i18n="advanced-colors">Advanced colors</span>
       <span class="chevron">▼</span>
     </button>
 
     <div class="advanced-colors" id="advanced-colors">
       <div class="color-row">
-        <span class="color-label">Work</span>
+        <span class="color-label" data-i18n="color-work">Work</span>
         <div class="color-value">
           <span class="hex-text" id="hex-work">#FFAA44</span>
           <input type="color" id="color-work" />
         </div>
       </div>
       <div class="color-row">
-        <span class="color-label">Success</span>
+        <span class="color-label" data-i18n="color-success">Success</span>
         <div class="color-value">
           <span class="hex-text" id="hex-success">#6B8CFF</span>
           <input type="color" id="color-success" />
         </div>
       </div>
       <div class="color-row">
-        <span class="color-label">Fail</span>
+        <span class="color-label" data-i18n="color-fail">Fail</span>
         <div class="color-value">
           <span class="hex-text" id="hex-fail">#889999</span>
           <input type="color" id="color-fail" />
-          </div>
+        </div>
       </div>
       <div class="color-row">
-        <span class="color-label">Sleep</span>
+        <span class="color-label" data-i18n="color-sleep">Sleep</span>
         <div class="color-value">
           <span class="hex-text" id="hex-sleep">#6B8CFF</span>
           <input type="color" id="color-sleep" />
         </div>
       </div>
       <div class="row" style="justify-content: flex-end; margin-top: 8px;">
-        <button class="btn-subtle" id="btn-reset-colors">Reset to Primary</button>
+        <button class="btn-subtle" id="btn-reset-colors" data-i18n="reset-colors">Reset to Primary</button>
       </div>
     </div>
   </div>
 
-  <p class="hint">Changes are saved automatically. Close this window when you are done.</p>
+  <p class="hint" data-i18n="settings-hint">Changes are saved automatically. Close this window when you are done.</p>
 
   <script type="module" src="/src/settings.ts"></script>
 </body>
+
 </html>

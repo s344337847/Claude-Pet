@@ -16,6 +16,12 @@ pub struct Config {
     pub fps_limit: u32,
     pub colors: Colors,
     pub monitor: Option<String>,
+    #[serde(default = "default_language")]
+    pub language: String,
+}
+
+fn default_language() -> String {
+    "en".to_string()
 }
 
 impl Default for Config {
@@ -32,6 +38,7 @@ impl Default for Config {
                 sleep: "#6b8cff".to_string(),
             },
             monitor: None,
+            language: "en".to_string(),
         }
     }
 }

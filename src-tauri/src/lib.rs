@@ -51,6 +51,23 @@ const STORE_PATH: &str = "config.json";
 const CONFIG_KEY: &str = "config";
 const BASE_LOGICAL_SIZE: f64 = 32.0;
 
+fn build_tray_menu<R: tauri::Runtime>(
+    app: &impl tauri::Manager<R>,
+    lang: &str,
+) -> Result<tauri::menu::Menu<R>, tauri::Error> {
+    let (settings_l, pets_l, devtools_l, quit_l) = match lang {
+        "zh" => ("设置", "宠物管理", "开发者工具", "退出"),
+        _ => ("Settings", "Pet Manager", "DevTools", "Quit"),
+    };
+    let settings_i = MenuItemBuilder::new(settings_l).id("settings").build(app)?;
+    let pets_i = MenuItemBuilder::new(pets_l).id("pets").build(app)?;
+    let devtools_i = MenuItemBuilder::new(devtools_l).id("devtools").build(app)?;
+    let quit_i = MenuItemBuilder::new(quit_l).id("quit").build(app)?;
+    MenuBuilder::new(app)
+        .items(&[&settings_i, &pets_i, &devtools_i, &quit_i])
+        .build()
+}
+
 #[tauri::command]
 fn get_config(app: tauri::AppHandle) -> Result<Config, String> {
     let store = app.store(STORE_PATH).map_err(|e| e.to_string())?;
@@ -168,11 +185,33 @@ fn set_monitor(app: tauri::AppHandle, monitor_name: Option<String>) -> Result<()
     Ok(())
 }
 
+#[tauri::command]
+fn set_language(app: tauri::AppHandle, language: String) -> Result<(), String> {
+    let store = app.store(STORE_PATH).map_err(|e| e.to_string())?;
+    let mut config: Config = match store.get(CONFIG_KEY) {
+        Some(v) => serde_json::from_value(v).map_err(|e| e.to_string())?,
+        None => Config::default(),
+    };
+    config.language = language;
+    store.set(CONFIG_KEY, serde_json::to_value(&config).map_err(|e| e.to_string())?);
+
+    if let Some(tray) = app.tray_by_id("main") {
+        let menu = build_tray_menu(&app, &config.language).map_err(|e| e.to_string())?;
+        tray.set_menu(Some(menu)).map_err(|e| e.to_string())?;
+    }
+
+    Ok(())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_store::Builder::default().build())
+        .plugin(tauri_plugin_autostart::init(
+            tauri_plugin_autostart::MacosLauncher::LaunchAgent,
+            Some(vec!["--hide"]),
+        ))
         .invoke_handler(tauri::generate_handler![
             get_config,
             save_config,
@@ -180,7 +219,8 @@ pub fn run() {
             destroy_pet,
             list_pets,
             get_available_monitors,
-            set_monitor
+            set_monitor,
+            set_language
         ])
         .setup(|app| {
             let main_window = app.get_webview_window("main").expect("main window not found");
@@ -188,7 +228,7 @@ pub fn run() {
             let _ = main_window.set_shadow(false);
             let _ = main_window.hide();
 
-            let _config: Config = match app.store(STORE_PATH) {
+            let config: Config = match app.store(STORE_PATH) {
                 Ok(store) => match store.get(CONFIG_KEY) {
                     Some(v) => serde_json::from_value(v).unwrap_or_default(),
                     None => Config::default(),
@@ -216,17 +256,11 @@ pub fn run() {
             });
 
             // Tray menu
-            let settings_i = MenuItemBuilder::new("Settings").id("settings").build(app)?;
-            let pets_i = MenuItemBuilder::new("Pet Manager").id("pets").build(app)?;
-            let devtools_i = MenuItemBuilder::new("DevTools").id("devtools").build(app)?;
-            let quit_i = MenuItemBuilder::new("Quit").id("quit").build(app)?;
-            let menu = MenuBuilder::new(app)
-                .items(&[&settings_i, &pets_i, &devtools_i, &quit_i])
-                .build()?;
+            let menu = build_tray_menu(app, &config.language)?;
 
             let tray_icon = app.default_window_icon().cloned().expect("default window icon not found");
 
-            TrayIconBuilder::new()
+            TrayIconBuilder::with_id("main")
                 .icon(tray_icon)
                 .menu(&menu)
                 .show_menu_on_left_click(true)

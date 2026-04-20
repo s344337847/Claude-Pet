@@ -176,7 +176,7 @@ impl PetManager {
             .skip_taskbar(true)
             .resizable(false)
             .shadow(false)
-            .devtools(true)
+            .devtools(false)
             .build()
             {
                 let _ = window.set_ignore_cursor_events(true);

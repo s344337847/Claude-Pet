@@ -1,4 +1,5 @@
 import { invoke } from '@tauri-apps/api/core';
+import { applyI18n, t } from './i18n';
 
 interface PetInstance {
   label: string;
@@ -21,7 +22,8 @@ function render(pets: PetInstance[]) {
   if (pets.length === 0) {
     const empty = document.createElement('div');
     empty.className = 'empty';
-    empty.textContent = 'No pets running.';
+    empty.dataset.i18n = 'no-pets';
+    empty.textContent = t('no-pets');
     listEl.appendChild(empty);
     return;
   }
@@ -43,11 +45,11 @@ function render(pets: PetInstance[]) {
 
     const sessionSpan = document.createElement('span');
     sessionSpan.className = 'pet-session';
-    sessionSpan.textContent = p.session_id || 'No session';
+    sessionSpan.textContent = p.session_id || t('no-session');
 
     const cwdSpan = document.createElement('span');
     cwdSpan.className = 'pet-cwd';
-    cwdSpan.textContent = p.cwd || 'No directory';
+    cwdSpan.textContent = p.cwd || t('no-directory');
 
     info.appendChild(styleSpan);
     info.appendChild(labelSpan);
@@ -56,7 +58,7 @@ function render(pets: PetInstance[]) {
 
     const deleteBtn = document.createElement('button');
     deleteBtn.className = 'btn-delete';
-    deleteBtn.textContent = 'Delete';
+    deleteBtn.textContent = t('delete');
     deleteBtn.addEventListener('click', async () => {
       await invoke('destroy_pet', { label: p.label });
       await loadPets();
@@ -71,4 +73,6 @@ function render(pets: PetInstance[]) {
 refreshBtn.addEventListener('click', loadPets);
 
 // Load on open
+applyI18n();
+document.title = t('pet-manager-title');
 loadPets();

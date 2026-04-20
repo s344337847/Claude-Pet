@@ -1,4 +1,6 @@
 import { invoke } from "@tauri-apps/api/core";
+import { isEnabled, enable, disable } from "@tauri-apps/plugin-autostart";
+import { setLanguage, t } from "./i18n";
 
 interface Colors {
   primary: string;
@@ -21,6 +23,7 @@ interface Config {
   fps_limit: number;
   colors: Colors;
   monitor: string | null;
+  language: string;
 }
 
 let currentConfig: Config = {
@@ -35,6 +38,7 @@ let currentConfig: Config = {
     sleep: "#6b8cff",
   },
   monitor: null,
+  language: "en",
 };
 
 const elScaleRange = document.getElementById("scale-range") as HTMLInputElement;
@@ -176,10 +180,20 @@ btnResetColors.addEventListener("click", () => {
 });
 
 const elMonitorSelect = document.getElementById("monitor-select") as HTMLSelectElement;
+const toggleAutostart = document.getElementById("toggle-autostart") as HTMLInputElement;
+const btnLangEn = document.getElementById("btn-lang-en") as HTMLButtonElement;
+const btnLangZh = document.getElementById("btn-lang-zh") as HTMLButtonElement;
+
+function updateLanguageUI() {
+  const lang = currentConfig.language;
+  [btnLangEn, btnLangZh].forEach((b) => b.classList.remove("active"));
+  if (lang === "en") btnLangEn.classList.add("active");
+  else if (lang === "zh") btnLangZh.classList.add("active");
+}
 
 async function loadMonitors() {
   const monitors = await invoke<MonitorInfo[]>("get_available_monitors");
-  elMonitorSelect.innerHTML = '<option value="">Primary Monitor</option>';
+  elMonitorSelect.innerHTML = `<option value="">${t("monitor-primary")}</option>`;
   for (const m of monitors) {
     const option = document.createElement("option");
     option.value = m.name;
@@ -201,7 +215,43 @@ async function init() {
   updateSizeUI();
   updateFpsUI();
   updateColorsUI();
+  updateLanguageUI();
   await loadMonitors();
+
+  // Apply i18n after config is loaded
+  setLanguage(currentConfig.language || "en", false);
+  document.title = t("app-title");
+
+  // Load autostart state
+  try {
+    toggleAutostart.checked = await isEnabled();
+  } catch {
+    // ignore if plugin unavailable
+  }
 }
+
+toggleAutostart.addEventListener("change", async () => {
+  try {
+    if (toggleAutostart.checked) {
+      await enable();
+    } else {
+      await disable();
+    }
+  } catch (err) {
+    console.error("Failed to change autostart setting:", err);
+    // Revert toggle on error
+    toggleAutostart.checked = await isEnabled().catch(() => false);
+  }
+});
+
+function applyLanguage(lang: string) {
+  currentConfig.language = lang;
+  updateLanguageUI();
+  setLanguage(lang, true);
+  document.title = t("app-title");
+}
+
+btnLangEn.addEventListener("click", () => applyLanguage("en"));
+btnLangZh.addEventListener("click", () => applyLanguage("zh"));
 
 init().catch(console.error);
