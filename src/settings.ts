@@ -24,6 +24,7 @@ interface Config {
   colors: Colors;
   monitor: string | null;
   language: string;
+  style_name: string;
 }
 
 let currentConfig: Config = {
@@ -39,6 +40,7 @@ let currentConfig: Config = {
   },
   monitor: null,
   language: "en",
+  style_name: "",
 };
 
 const elScaleRange = document.getElementById("scale-range") as HTMLInputElement;
@@ -180,6 +182,7 @@ btnResetColors.addEventListener("click", () => {
 });
 
 const elMonitorSelect = document.getElementById("monitor-select") as HTMLSelectElement;
+const elStyleSelect = document.getElementById("style-select") as HTMLSelectElement;
 const toggleAutostart = document.getElementById("toggle-autostart") as HTMLInputElement;
 const btnLangEn = document.getElementById("btn-lang-en") as HTMLButtonElement;
 const btnLangZh = document.getElementById("btn-lang-zh") as HTMLButtonElement;
@@ -209,6 +212,27 @@ elMonitorSelect.addEventListener("change", () => {
   invoke("set_monitor", { monitorName: value }).catch(console.error);
 });
 
+async function loadStyles() {
+  const styles = await invoke<string[]>("list_styles");
+  // 保留第一个 "随机" 选项
+  while (elStyleSelect.options.length > 1) {
+    elStyleSelect.remove(1);
+  }
+  for (const style of styles) {
+    const option = document.createElement("option");
+    option.value = style;
+    option.textContent = t(`style-${style}`) || style;
+    elStyleSelect.appendChild(option);
+  }
+  elStyleSelect.value = currentConfig.style_name || "";
+}
+
+elStyleSelect.addEventListener("change", () => {
+  const value = elStyleSelect.value || "";
+  currentConfig.style_name = value;
+  invoke("save_config", { config: currentConfig }).catch(console.error);
+});
+
 async function init() {
   const cfg = await invoke<Config>("get_config");
   currentConfig = cfg;
@@ -217,6 +241,7 @@ async function init() {
   updateColorsUI();
   updateLanguageUI();
   await loadMonitors();
+  await loadStyles();
 
   // Apply i18n after config is loaded
   setLanguage(currentConfig.language || "en", false);

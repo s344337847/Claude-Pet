@@ -66,7 +66,7 @@ export class Pet {
     this.action.onEnter(this);
     // Preload sprite sheet if the initial style has one
     if (this.style.spriteSheet) {
-      this.renderer.loadSpriteSheet(this.style.spriteSheet.imageSrc).catch(() => {});
+      this.renderer.loadSpriteSheet(this.style.spriteSheet.imageSrc);
     }
   }
 
@@ -92,7 +92,7 @@ export class Pet {
     this.renderer.setBaseOffsetY(calculateBaseOffsetY(this.style));
     // Preload sprite sheet if available
     if (this.style.spriteSheet) {
-      this.renderer.loadSpriteSheet(this.style.spriteSheet.imageSrc).catch(() => {});
+      this.renderer.loadSpriteSheet(this.style.spriteSheet.imageSrc);
     }
   }
 

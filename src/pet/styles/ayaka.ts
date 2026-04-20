@@ -4,7 +4,7 @@ export const ayakaStyle: StyleConfig = {
     name: 'ayaka',
     colors: { primary: '#d77757', work: '#d77757', success: '#d77757', fail: '#889999', sleep: '#d77757' },
     spriteSheet: {
-        imageSrc: '/sprites/ayaka.png',  // 放入 public/sprites/ 目录
+        imageSrc: '/src/assets/sprites/ayaka.png',  // 放入 public/sprites/ 目录
         frameSize: 128,                   // 每帧 128x128 像素
         states: {
             idle: { row: 0, frameCount: 1, frameRate: 6 },  // 第1行，1帧

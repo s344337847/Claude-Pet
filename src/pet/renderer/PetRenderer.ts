@@ -23,16 +23,32 @@ export class PetRenderer {
     this.ctx.clearRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
   }
 
-  /** Load a sprite sheet image into the cache */
-  async loadSpriteSheet(src: string): Promise<void> {
-    if (this.spriteSheetCache.has(src)) return;
+  /** Track already-reported errors to avoid console spam */
+  private reportedErrors = new Set<string>();
+
+  private reportOnce(msg: string) {
+    if (!this.reportedErrors.has(msg)) {
+      console.error(`[PetRenderer] ${msg}`);
+      this.reportedErrors.add(msg);
+    }
+  }
+
+  /** Load a sprite sheet image into the cache. Returns true on success, false on failure (error is logged). */
+  async loadSpriteSheet(src: string): Promise<boolean> {
+    if (this.spriteSheetCache.has(src)) return true;
     const img = new Image();
     img.src = src;
-    await new Promise<void>((resolve, reject) => {
-      img.onload = () => resolve();
-      img.onerror = () => reject(new Error(`Failed to load sprite sheet: ${src}`));
-    });
-    this.spriteSheetCache.set(src, img);
+    try {
+      await new Promise<void>((resolve, reject) => {
+        img.onload = () => resolve();
+        img.onerror = () => reject(new Error(`Failed to load sprite sheet: ${src}`));
+      });
+      this.spriteSheetCache.set(src, img);
+      return true;
+    } catch (err) {
+      console.error(`[PetRenderer] Sprite sheet load failed: ${src}`, err);
+      return false;
+    }
   }
 
   /** Check if a sprite sheet has been loaded and is ready */
@@ -49,11 +65,36 @@ export class PetRenderer {
     const sheet = style.spriteSheet;
     if (!sheet) return false;
 
+    if (!sheet.imageSrc || sheet.imageSrc.trim() === '') {
+      this.reportOnce(`spriteSheet imageSrc is empty (style: ${style.name})`);
+      return false;
+    }
+    if (sheet.frameSize <= 0) {
+      this.reportOnce(`spriteSheet frameSize must be > 0, got ${sheet.frameSize} (style: ${style.name})`);
+      return false;
+    }
+
     const stateConfig = sheet.states[stateName];
     if (!stateConfig) return false;
 
+    if (stateConfig.frameCount <= 0) {
+      this.reportOnce(`spriteSheet state "${stateName}" has invalid frameCount: ${stateConfig.frameCount} (style: ${style.name})`);
+      return false;
+    }
+    if (stateConfig.row < 0) {
+      this.reportOnce(`spriteSheet state "${stateName}" has invalid row: ${stateConfig.row} (style: ${style.name})`);
+      return false;
+    }
+
     const img = this.spriteSheetCache.get(sheet.imageSrc);
-    if (!img || !img.complete) return false;
+    if (!img) {
+      this.reportOnce(`spriteSheet image not loaded yet: ${sheet.imageSrc} (style: ${style.name})`);
+      return false;
+    }
+    if (!img.complete) {
+      // Image is still loading; silently skip to avoid spam
+      return false;
+    }
 
     const actualFrame = animFrameIndex % stateConfig.frameCount;
     const frameSize = sheet.frameSize;

@@ -10,10 +10,27 @@ interface PetInstance {
 
 const listEl = document.getElementById('pet-list') as HTMLDivElement;
 const refreshBtn = document.getElementById('btn-refresh') as HTMLButtonElement;
+const createLabelInput = document.getElementById('create-label') as HTMLInputElement;
+const createStyleSelect = document.getElementById('create-style') as HTMLSelectElement;
+const createBtn = document.getElementById('btn-create') as HTMLButtonElement;
 
 async function loadPets() {
   const pets = await invoke<PetInstance[]>('list_pets');
   render(pets);
+}
+
+async function loadStyles() {
+  const styles = await invoke<string[]>('list_styles');
+  // 保留第一个 "随机" 选项
+  while (createStyleSelect.options.length > 1) {
+    createStyleSelect.remove(1);
+  }
+  for (const style of styles) {
+    const option = document.createElement('option');
+    option.value = style;
+    option.textContent = t(`style-${style}`) || style;
+    createStyleSelect.appendChild(option);
+  }
 }
 
 function render(pets: PetInstance[]) {
@@ -72,7 +89,16 @@ function render(pets: PetInstance[]) {
 
 refreshBtn.addEventListener('click', loadPets);
 
+createBtn.addEventListener('click', async () => {
+  const label = createLabelInput.value.trim();
+  if (!label) return;
+  await invoke('create_pet_window', { label });
+  createLabelInput.value = '';
+  await loadPets();
+});
+
 // Load on open
 applyI18n();
 document.title = t('pet-manager-title');
+loadStyles();
 loadPets();

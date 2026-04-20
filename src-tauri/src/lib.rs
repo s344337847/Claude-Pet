@@ -104,6 +104,11 @@ fn create_pet_window(label: String, state: tauri::State<Arc<PetManager>>) {
 }
 
 #[tauri::command]
+fn list_styles() -> Vec<String> {
+    pet_manager::STYLE_NAMES.iter().map(|s| s.to_string()).collect()
+}
+
+#[tauri::command]
 fn destroy_pet(label: String, state: tauri::State<Arc<PetManager>>) {
     state.destroy_pet(label);
 }
@@ -218,6 +223,7 @@ pub fn run() {
             create_pet_window,
             destroy_pet,
             list_pets,
+            list_styles,
             get_available_monitors,
             set_monitor,
             set_language

@@ -18,6 +18,8 @@ pub struct Config {
     pub monitor: Option<String>,
     #[serde(default = "default_language")]
     pub language: String,
+    #[serde(default)]
+    pub style_name: String,
 }
 
 fn default_language() -> String {
@@ -39,6 +41,7 @@ impl Default for Config {
             },
             monitor: None,
             language: "en".to_string(),
+            style_name: String::new(),
         }
     }
 }

@@ -142,10 +142,70 @@
     .btn-refresh:hover {
       background: var(--surface-hover);
     }
+
+    .create-section {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 16px;
+      padding: 12px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+    }
+
+    .create-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .create-row input,
+    .create-row select {
+      flex: 1;
+      padding: 6px 8px;
+      font-size: 12px;
+      background: var(--bg);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      outline: none;
+    }
+
+    .create-row input:focus,
+    .create-row select:focus {
+      border-color: var(--accent);
+    }
+
+    .btn-create {
+      padding: 6px 12px;
+      font-size: 12px;
+      font-weight: 500;
+      color: #fff;
+      background: var(--accent);
+      border: none;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: background 0.15s ease;
+      flex-shrink: 0;
+    }
+
+    .btn-create:hover {
+      background: var(--accent-hover);
+    }
   </style>
 </head>
 <body>
   <h1 data-i18n="pet-manager-title">Pet Manager</h1>
+  <div class="create-section">
+    <div class="create-row">
+      <input type="text" id="create-label" data-i18n="pet-label-placeholder" data-i18n-attr="placeholder" placeholder="Pet label" />
+      <select id="create-style">
+        <option value="" data-i18n="style-random">Random</option>
+      </select>
+      <button class="btn-create" id="btn-create" data-i18n="create">Create</button>
+    </div>
+  </div>
   <button class="btn-refresh" id="btn-refresh" data-i18n="refresh">Refresh</button>
   <div id="pet-list" class="pet-list"></div>
 

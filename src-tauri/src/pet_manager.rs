@@ -7,7 +7,7 @@ use std::sync::{Arc, Mutex};
 use tauri::{Emitter, Manager};
 use tauri_plugin_store::StoreExt;
 
-const STYLE_NAMES: &[&str] = &["default-cat", "dog"];
+pub const STYLE_NAMES: &[&str] = &["default-cat", "dog", "ayaka"];
 const STORE_PATH: &str = "config.json";
 const CONFIG_KEY: &str = "config";
 const BASE_LOGICAL_SIZE: f64 = 32.0;
@@ -35,8 +35,24 @@ impl PetManager {
         })
     }
 
-    fn pick_and_commit_style(&self) -> String {
+    fn resolve_style(&self) -> String {
+        let config: Config = match self.app_handle.store(STORE_PATH) {
+            Ok(store) => match store.get(CONFIG_KEY) {
+                Some(v) => serde_json::from_value(v).unwrap_or_default(),
+                None => Config::default(),
+            },
+            Err(_) => Config::default(),
+        };
+
         let mut counts = self.style_counts.lock().unwrap();
+
+        // 如果配置中指定了有效样式名，直接使用
+        if !config.style_name.is_empty() && STYLE_NAMES.contains(&config.style_name.as_str()) {
+            *counts.entry(config.style_name.clone()).or_insert(0) += 1;
+            return config.style_name;
+        }
+
+        // 否则按轮询最少使用的分配
         let mut min_count = u32::MAX;
         let mut candidates = Vec::new();
         for name in STYLE_NAMES {
@@ -130,7 +146,7 @@ impl PetManager {
         cwd: Option<String>,
     ) -> String {
         let label = session_id.clone().expect("create_pet requires a session_id");
-        let style_name = self.pick_and_commit_style();
+        let style_name = self.resolve_style();
         {
             let mut pets = self.pets.lock().unwrap();
             if pets.contains_key(&label) {

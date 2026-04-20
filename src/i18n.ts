@@ -38,6 +38,13 @@ const en: Dict = {
   "no-session": "No session",
   "no-directory": "No directory",
   "delete": "Delete",
+  "create": "Create",
+  "pet-label-placeholder": "Pet label",
+  "style-random": "Random",
+  "style-default-cat": "Default Cat",
+  "style-dog": "Dog",
+  "style-ayaka": "Ayaka",
+  "style-hint": "Choose the default pet style. New pets will use this style.",
 };
 
 const zh: Dict = {
@@ -76,6 +83,13 @@ const zh: Dict = {
   "no-session": "无会话",
   "no-directory": "无目录",
   "delete": "删除",
+  "create": "创建",
+  "pet-label-placeholder": "宠物标签",
+  "style-random": "随机",
+  "style-default-cat": "默认猫咪",
+  "style-dog": "狗狗",
+  "style-ayaka": "绫华",
+  "style-hint": "选择默认宠物样式。新创建的宠物将使用此样式。",
 };
 
 const dicts: Record<string, Dict> = { en, zh };
