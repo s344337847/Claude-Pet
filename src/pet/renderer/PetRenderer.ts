@@ -2,6 +2,7 @@ import type { StyleConfig, PixelPoint, PixelRect } from '../styles/types';
 
 export class PetRenderer {
   private frame = 0;
+  private baseOffsetY = 0;
 
   constructor(private ctx: CanvasRenderingContext2D, private scale: number) {}
 
@@ -13,18 +14,22 @@ export class PetRenderer {
     this.frame = f;
   }
 
+  setBaseOffsetY(y: number) {
+    this.baseOffsetY = y;
+  }
+
   clear() {
     this.ctx.clearRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
   }
 
   pixel(x: number, y: number, color: string) {
     this.ctx.fillStyle = color;
-    this.ctx.fillRect(x * this.scale, y * this.scale, this.scale, this.scale);
+    this.ctx.fillRect(x * this.scale, (y + this.baseOffsetY) * this.scale, this.scale, this.scale);
   }
 
   rect(r: PixelRect, color: string) {
     this.ctx.fillStyle = color;
-    this.ctx.fillRect(r.x * this.scale, r.y * this.scale, r.w * this.scale, r.h * this.scale);
+    this.ctx.fillRect(r.x * this.scale, (r.y + this.baseOffsetY) * this.scale, r.w * this.scale, r.h * this.scale);
   }
 
   private points(pts: PixelPoint[], color: string, offsetY: number) {

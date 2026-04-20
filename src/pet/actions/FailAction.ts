@@ -10,9 +10,9 @@ export class FailAction implements Action {
   render(renderer: PetRenderer, pet: Pet) {
     const style = pet.getStyle();
     const color = style.colors.fail;
-    renderer.drawBody(style, color, 2);
-    renderer.drawFace(style, 2, false, 'frown', '#111');
-    renderer.drawLegs(style, color, 2, 0);
+    renderer.drawBody(style, color, 1);
+    renderer.drawFace(style, 1, false, 'frown', '#111');
+    renderer.drawLegs(style, color, 1, 0);
     // sweat drop
     renderer.pixel(22, 6, '#4af');
     renderer.pixel(22, 7, '#4af');

@@ -13,7 +13,7 @@ export class WalkAction implements Action {
   }
   render(renderer: PetRenderer, pet: Pet) {
     const frame = pet.getFrame();
-    const bounce = Math.abs(Math.sin(frame * 0.2)) * 1.5;
+    const bounce = -Math.abs(Math.sin(frame * 0.2)) * 1;
     const style = pet.getStyle();
     const color = style.colors.primary;
     renderer.drawBody(style, color, bounce);

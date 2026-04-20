@@ -15,6 +15,38 @@ const ACTIONS: Record<PetState, new () => Action> = {
   exit: ExitAction,
 };
 
+const CANVAS_LOGICAL_SIZE = 32;
+
+function getStyleMaxY(style: StyleConfig): number {
+  let maxY = 0;
+  const body = style.body;
+  maxY = Math.max(maxY, body.head.y + body.head.h);
+  for (const p of body.ears) maxY = Math.max(maxY, p.y + 1);
+  maxY = Math.max(maxY, body.bodyRect.y + body.bodyRect.h);
+  for (const p of body.tail) maxY = Math.max(maxY, p.y + 1);
+
+  const face = style.face;
+  maxY = Math.max(maxY, face.eyeLeft.y + face.eyeLeft.h);
+  maxY = Math.max(maxY, face.eyeRight.y + face.eyeRight.h);
+  for (const pts of Object.values(face.mouth)) {
+    for (const p of pts) maxY = Math.max(maxY, p.y + 1);
+  }
+  if (face.tongue) {
+    for (const p of face.tongue) maxY = Math.max(maxY, p.y + 1);
+  }
+
+  for (const p of style.legs.left) maxY = Math.max(maxY, p.y + 1);
+  for (const p of style.legs.right) maxY = Math.max(maxY, p.y + 1);
+
+  return maxY;
+}
+
+function calculateBaseOffsetY(style: StyleConfig): number {
+  const maxY = getStyleMaxY(style);
+  // Reserve 1px for walk leg animation (leg1/leg2 alternate +1)
+  return Math.max(0, CANVAS_LOGICAL_SIZE - maxY - 1);
+}
+
 export class Pet {
   private frame = 0;
   private currentState: PetState = 'idle';
@@ -27,6 +59,7 @@ export class Pet {
     private ctx: CanvasRenderingContext2D,
   ) {
     this.renderer = new PetRenderer(ctx, scale);
+    this.renderer.setBaseOffsetY(calculateBaseOffsetY(this.style));
     this.action = new IdleAction();
     this.action.onEnter(this);
   }
@@ -34,7 +67,7 @@ export class Pet {
   setScale(s: number) {
     this.scale = s;
     this.renderer.setScale(this.scale);
-    const logicalSize = 32 * this.scale;
+    const logicalSize = CANVAS_LOGICAL_SIZE * this.scale;
     this.ctx.canvas.width = logicalSize;
     this.ctx.canvas.height = logicalSize;
   }
@@ -50,6 +83,7 @@ export class Pet {
   setStyle(style: StyleConfig) {
     // Preserve user-configured colors; only swap pixel geometry
     this.style = { ...style, colors: this.style.colors };
+    this.renderer.setBaseOffsetY(calculateBaseOffsetY(this.style));
   }
 
   transitionTo(state: PetState) {
