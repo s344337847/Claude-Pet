@@ -4,12 +4,11 @@
       {
         "hooks": [
           {
-            "type": "command",
-            "command": "node",
-            "args": [
-              "-e",
-              "require('http').request({hostname:'127.0.0.1',port:9876,path:'/v1/event/work',method:'POST'},res=>process.exit(0)).on('error',()=>process.exit(0)).end()"
-            ]
+            "type": "http",
+            "url": "http://127.0.0.1:9876/v1/event/work",
+            "headers": {
+              "Content-Type": "application/json"
+            }
           }
         ]
       }
@@ -18,12 +17,37 @@
       {
         "hooks": [
           {
-            "type": "command",
-            "command": "node",
-            "args": [
-              "-e",
-              "require('http').request({hostname:'127.0.0.1',port:9876,path:'/v1/event/success',method:'POST'},res=>process.exit(0)).on('error',()=>process.exit(0)).end()"
-            ]
+            "type": "http",
+            "url": "http://127.0.0.1:9876/v1/event/success",
+            "headers": {
+              "Content-Type": "application/json"
+            }
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "http",
+            "url": "http://127.0.0.1:9876/v1/event/session_end",
+            "headers": {
+              "Content-Type": "application/json"
+            }
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "http",
+            "url": "http://127.0.0.1:9876/v1/event/session_start",
+            "headers": {
+              "Content-Type": "application/json"
+            }
           }
         ]
       }
