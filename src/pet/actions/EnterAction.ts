@@ -18,6 +18,9 @@ export class EnterAction implements Action {
   }
 
   render(renderer: PetRenderer, pet: Pet) {
+    if (renderer.renderSpriteSheet(pet.getStyle(), this.name, pet.getAnimFrameForState(this.name))) {
+      return;
+    }
     const frame = pet.getFrame();
     const wave = Math.sin(frame * 0.3); // quick wave for excitement
     const offsetY = Math.sin(frame * 0.15) * 1.5 - 1; // little hop

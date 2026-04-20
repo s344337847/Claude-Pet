@@ -12,6 +12,9 @@ export class WalkAction implements Action {
     }
   }
   render(renderer: PetRenderer, pet: Pet) {
+    if (renderer.renderSpriteSheet(pet.getStyle(), this.name, pet.getAnimFrameForState(this.name))) {
+      return;
+    }
     const frame = pet.getFrame();
     const bounce = -Math.abs(Math.sin(frame * 0.2)) * 1;
     const style = pet.getStyle();

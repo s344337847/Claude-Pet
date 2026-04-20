@@ -17,6 +17,9 @@ export class ExitAction implements Action {
   }
 
   render(renderer: PetRenderer, pet: Pet) {
+    if (renderer.renderSpriteSheet(pet.getStyle(), this.name, pet.getAnimFrameForState(this.name))) {
+      return;
+    }
     const progress = Math.min(this.timer / this.DURATION, 1);
     const offsetY = progress * 1; // slowly sink down
     const blink = Math.random() < 0.03;

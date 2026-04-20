@@ -18,6 +18,9 @@ export class IdleAction implements Action {
   }
 
   render(renderer: PetRenderer, pet: Pet) {
+    if (renderer.renderSpriteSheet(pet.getStyle(), this.name, pet.getAnimFrameForState(this.name))) {
+      return;
+    }
     const frame = pet.getFrame();
     const blink = Math.random() < 0.02;
     const offsetY = Math.sin(frame * 0.05) * 0.5;

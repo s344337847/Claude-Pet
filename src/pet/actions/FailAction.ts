@@ -8,6 +8,9 @@ export class FailAction implements Action {
   onEnter() {}
   update() {}
   render(renderer: PetRenderer, pet: Pet) {
+    if (renderer.renderSpriteSheet(pet.getStyle(), this.name, pet.getAnimFrameForState(this.name))) {
+      return;
+    }
     const style = pet.getStyle();
     const color = style.colors.fail;
     renderer.drawBody(style, color, 1);

@@ -52,6 +52,8 @@ export class Pet {
   private currentState: PetState = 'idle';
   private action: Action;
   private renderer: PetRenderer;
+  /** Global frame counter when the current state started */
+  private stateEnterFrame = 0;
 
   constructor(
     private style: StyleConfig,
@@ -62,6 +64,10 @@ export class Pet {
     this.renderer.setBaseOffsetY(calculateBaseOffsetY(this.style));
     this.action = new IdleAction();
     this.action.onEnter(this);
+    // Preload sprite sheet if the initial style has one
+    if (this.style.spriteSheet) {
+      this.renderer.loadSpriteSheet(this.style.spriteSheet.imageSrc).catch(() => {});
+    }
   }
 
   setScale(s: number) {
@@ -84,6 +90,10 @@ export class Pet {
     // Preserve user-configured colors; only swap pixel geometry
     this.style = { ...style, colors: this.style.colors };
     this.renderer.setBaseOffsetY(calculateBaseOffsetY(this.style));
+    // Preload sprite sheet if available
+    if (this.style.spriteSheet) {
+      this.renderer.loadSpriteSheet(this.style.spriteSheet.imageSrc).catch(() => {});
+    }
   }
 
   transitionTo(state: PetState) {
@@ -96,7 +106,22 @@ export class Pet {
     const ActionCtor = ACTIONS[state];
     this.action = new ActionCtor();
     this.currentState = state;
+    this.stateEnterFrame = this.frame;
     this.action.onEnter(this);
+  }
+
+  /**
+   * Get the current animation frame index for a given state.
+   * Uses the sprite sheet config if available, otherwise returns 0.
+   */
+  getAnimFrameForState(stateName: string, defaultFrameRate: number = 6): number {
+    const sheet = this.style.spriteSheet;
+    if (!sheet) return 0;
+    const stateConfig = sheet.states[stateName];
+    if (!stateConfig) return 0;
+    const frameRate = stateConfig.frameRate ?? defaultFrameRate;
+    const elapsed = this.frame - this.stateEnterFrame;
+    return Math.floor(elapsed / frameRate) % Math.max(1, stateConfig.frameCount);
   }
 
   tick() {

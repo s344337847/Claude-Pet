@@ -8,6 +8,9 @@ export class SuccessAction implements Action {
   onEnter() {}
   update() {}
   render(renderer: PetRenderer, pet: Pet) {
+    if (renderer.renderSpriteSheet(pet.getStyle(), this.name, pet.getAnimFrameForState(this.name))) {
+      return;
+    }
     const frame = pet.getFrame();
     const jump = Math.abs(Math.sin(frame * 0.3)) * 4;
     const style = pet.getStyle();

@@ -8,6 +8,9 @@ export class SleepAction implements Action {
   onEnter() {}
   update() {}
   render(renderer: PetRenderer, pet: Pet) {
+    if (renderer.renderSpriteSheet(pet.getStyle(), this.name, pet.getAnimFrameForState(this.name))) {
+      return;
+    }
     const frame = pet.getFrame();
     const offsetY = Math.sin(frame * 0.03) * 0.5;
     const style = pet.getStyle();

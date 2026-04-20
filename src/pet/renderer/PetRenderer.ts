@@ -3,6 +3,7 @@ import type { StyleConfig, PixelPoint, PixelRect } from '../styles/types';
 export class PetRenderer {
   private frame = 0;
   private baseOffsetY = 0;
+  private spriteSheetCache = new Map<string, HTMLImageElement>();
 
   constructor(private ctx: CanvasRenderingContext2D, private scale: number) {}
 
@@ -20,6 +21,56 @@ export class PetRenderer {
 
   clear() {
     this.ctx.clearRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
+  }
+
+  /** Load a sprite sheet image into the cache */
+  async loadSpriteSheet(src: string): Promise<void> {
+    if (this.spriteSheetCache.has(src)) return;
+    const img = new Image();
+    img.src = src;
+    await new Promise<void>((resolve, reject) => {
+      img.onload = () => resolve();
+      img.onerror = () => reject(new Error(`Failed to load sprite sheet: ${src}`));
+    });
+    this.spriteSheetCache.set(src, img);
+  }
+
+  /** Check if a sprite sheet has been loaded and is ready */
+  hasSpriteSheetLoaded(src: string): boolean {
+    const img = this.spriteSheetCache.get(src);
+    return img?.complete === true;
+  }
+
+  /**
+   * Renders a frame from a sprite sheet.
+   * Returns true if rendered, false if no sprite sheet config or not loaded yet.
+   */
+  renderSpriteSheet(style: StyleConfig, stateName: string, animFrameIndex: number): boolean {
+    const sheet = style.spriteSheet;
+    if (!sheet) return false;
+
+    const stateConfig = sheet.states[stateName];
+    if (!stateConfig) return false;
+
+    const img = this.spriteSheetCache.get(sheet.imageSrc);
+    if (!img || !img.complete) return false;
+
+    const actualFrame = animFrameIndex % stateConfig.frameCount;
+    const frameSize = sheet.frameSize;
+
+    const sx = actualFrame * frameSize;
+    const sy = stateConfig.row * frameSize;
+
+    const canvasW = this.ctx.canvas.width;
+    const canvasH = this.ctx.canvas.height;
+
+    // Use nearest-neighbor for crisp pixel art scaling
+    const prevSmoothing = this.ctx.imageSmoothingEnabled;
+    this.ctx.imageSmoothingEnabled = false;
+    this.ctx.drawImage(img, sx, sy, frameSize, frameSize, 0, 0, canvasW, canvasH);
+    this.ctx.imageSmoothingEnabled = prevSmoothing;
+
+    return true;
   }
 
   pixel(x: number, y: number, color: string) {
