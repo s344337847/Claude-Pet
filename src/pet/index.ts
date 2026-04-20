@@ -31,6 +31,7 @@ let tooltipExpanded = false;
 let lastFrameTime = 0;
 
 const pet = new Pet(defaultStyle, scale, ctx);
+pet.setFacing(walkDirection);
 
 function applyScale(s: number) {
   scale = s;
@@ -115,9 +116,11 @@ function updateWalk() {
     if (winX <= MARGIN) {
       winX = MARGIN;
       walkDirection = 1;
+      pet.setFacing(walkDirection);
     } else if (winX >= screenW - physSize - MARGIN) {
       winX = screenW - physSize - MARGIN;
       walkDirection = -1;
+      pet.setFacing(walkDirection);
     }
     win.setPosition(new PhysicalPosition(Math.round(winX), Math.round(winY)));
     return;

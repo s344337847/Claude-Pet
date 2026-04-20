@@ -1,9 +1,12 @@
 import type { StyleConfig, PixelPoint, PixelRect } from '../styles/types';
 
+const CANVAS_LOGICAL_SIZE = 32;
+
 export class PetRenderer {
   private frame = 0;
   private baseOffsetY = 0;
   private spriteSheetCache = new Map<string, HTMLImageElement>();
+  private facing = 1; // 1 = right, -1 = left
 
   constructor(private ctx: CanvasRenderingContext2D, private scale: number) {}
 
@@ -17,6 +20,10 @@ export class PetRenderer {
 
   setBaseOffsetY(y: number) {
     this.baseOffsetY = y;
+  }
+
+  setFacing(f: number) {
+    this.facing = f >= 0 ? 1 : -1;
   }
 
   clear() {
@@ -108,20 +115,28 @@ export class PetRenderer {
     // Use nearest-neighbor for crisp pixel art scaling
     const prevSmoothing = this.ctx.imageSmoothingEnabled;
     this.ctx.imageSmoothingEnabled = false;
+    this.ctx.save();
+    if (this.facing === -1) {
+      this.ctx.translate(canvasW, 0);
+      this.ctx.scale(-1, 1);
+    }
     this.ctx.drawImage(img, sx, sy, frameSize, frameSize, 0, 0, canvasW, canvasH);
+    this.ctx.restore();
     this.ctx.imageSmoothingEnabled = prevSmoothing;
 
     return true;
   }
 
   pixel(x: number, y: number, color: string) {
+    const drawX = this.facing === -1 ? CANVAS_LOGICAL_SIZE - 1 - x : x;
     this.ctx.fillStyle = color;
-    this.ctx.fillRect(x * this.scale, (y + this.baseOffsetY) * this.scale, this.scale, this.scale);
+    this.ctx.fillRect(drawX * this.scale, (y + this.baseOffsetY) * this.scale, this.scale, this.scale);
   }
 
   rect(r: PixelRect, color: string) {
+    const drawX = this.facing === -1 ? CANVAS_LOGICAL_SIZE - r.x - r.w : r.x;
     this.ctx.fillStyle = color;
-    this.ctx.fillRect(r.x * this.scale, (r.y + this.baseOffsetY) * this.scale, r.w * this.scale, r.h * this.scale);
+    this.ctx.fillRect(drawX * this.scale, (r.y + this.baseOffsetY) * this.scale, r.w * this.scale, r.h * this.scale);
   }
 
   private points(pts: PixelPoint[], color: string, offsetY: number) {

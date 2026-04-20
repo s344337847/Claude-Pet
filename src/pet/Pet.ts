@@ -54,6 +54,7 @@ export class Pet {
   private renderer: PetRenderer;
   /** Global frame counter when the current state started */
   private stateEnterFrame = 0;
+  private facing = 1; // 1 = right, -1 = left
 
   constructor(
     private style: StyleConfig,
@@ -81,6 +82,12 @@ export class Pet {
   getFrame() { return this.frame; }
   getStyle() { return this.style; }
   getCurrentState() { return this.currentState; }
+
+  setFacing(f: number) {
+    this.facing = f >= 0 ? 1 : -1;
+  }
+
+  getFacing() { return this.facing; }
 
   setColors(colors: StyleColors) {
     this.style = { ...this.style, colors };
@@ -127,6 +134,7 @@ export class Pet {
   tick() {
     this.frame++;
     this.renderer.setFrame(this.frame);
+    this.renderer.setFacing(this.facing);
     this.action.update(this);
     this.renderer.clear();
     this.action.render(this.renderer, this);
