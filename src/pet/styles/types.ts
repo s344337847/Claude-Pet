@@ -32,6 +32,8 @@ export interface StyleConfig {
   colors: StyleColors;
   /** Optional sprite sheet for frame-based animation. When provided, sprite sheet takes precedence over procedural drawing */
   spriteSheet?: SpriteSheetConfig;
+  /** Initial facing direction: 1 = right, -1 = left. Defaults to 1 if not specified. */
+  initialFacing?: number;
   body: {
     head: PixelRect;
     ears: PixelPoint[];

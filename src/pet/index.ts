@@ -18,7 +18,7 @@ let winY = 0;
 let screenW = 1920;
 let screenH = 1080;
 let scaleFactor = 1.0;
-let walkDirection = 1; // 1 = right, -1 = left
+let walkDirection = defaultStyle.initialFacing ?? 1; // 1 = right, -1 = left
 let walkSpeed = 2;     // physical pixels per frame
 let stateTimer = 0;
 const MARGIN = 10;     // physical pixels
@@ -224,6 +224,8 @@ listen<{ label: string; style_name: string }>('pet_style_init', (event) => {
   if (event.payload.label === label) {
     const style = STYLES.find((s) => s.name === event.payload.style_name) || defaultStyle;
     pet.setStyle(style);
+    walkDirection = style.initialFacing ?? 1;
+    pet.setFacing(walkDirection);
   }
 });
 
@@ -310,6 +312,8 @@ Promise.all([initScreenSize(), initConfig()]).then(async () => {
     if (myPet?.style_name) {
       const style = STYLES.find((s) => s.name === myPet.style_name) || defaultStyle;
       pet.setStyle(style);
+      walkDirection = style.initialFacing ?? 1;
+      pet.setFacing(walkDirection);
     }
   } catch {
     // ignore

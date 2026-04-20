@@ -2,6 +2,7 @@ import type { StyleConfig } from './types';
 
 export const ayakaStyle: StyleConfig = {
     name: 'ayaka',
+    initialFacing: -1,
     colors: { primary: '#d77757', work: '#d77757', success: '#d77757', fail: '#889999', sleep: '#d77757' },
     spriteSheet: {
         imageSrc: '/src/assets/sprites/ayaka.png',  // 放入 public/sprites/ 目录
