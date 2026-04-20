@@ -28,7 +28,7 @@ canvas {
   display: block;
   width: 128px;
   height: 128px;
-  image-rendering: pixelated;
+  /* image-rendering: pixelated; */
 }
 
 /* === Pet Tooltip: Pixel-Art Dialog Style === */

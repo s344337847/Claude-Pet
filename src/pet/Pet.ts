@@ -15,7 +15,7 @@ const ACTIONS: Record<PetState, new () => Action> = {
   exit: ExitAction,
 };
 
-const CANVAS_LOGICAL_SIZE = 32;
+export const CANVAS_LOGICAL_SIZE = 32;
 
 function getStyleMaxY(style: StyleConfig): number {
   let maxY = 0;
@@ -74,14 +74,29 @@ export class Pet {
   setScale(s: number) {
     this.scale = s;
     this.renderer.setScale(this.scale);
-    const logicalSize = CANVAS_LOGICAL_SIZE * this.scale;
-    this.ctx.canvas.width = logicalSize;
-    this.ctx.canvas.height = logicalSize;
+    const pixelSize = this.getCanvasPixelSize();
+    this.ctx.canvas.width = pixelSize;
+    this.ctx.canvas.height = pixelSize;
   }
 
   getFrame() { return this.frame; }
   getStyle() { return this.style; }
   getCurrentState() { return this.currentState; }
+
+  getCanvasPixelSize(): number {
+    if (this.style.spriteSheet) {
+      return this.style.spriteSheet.frameSize;
+    }
+    return CANVAS_LOGICAL_SIZE * this.scale;
+  }
+
+  getDisplaySize(): number {
+    if (this.style.spriteSheet) {
+      const baseScale = this.style.spriteSheet.frameSize / CANVAS_LOGICAL_SIZE;
+      return Math.round(this.style.spriteSheet.frameSize * this.scale / baseScale);
+    }
+    return CANVAS_LOGICAL_SIZE * this.scale;
+  }
 
   setFacing(f: number) {
     this.facing = f >= 0 ? 1 : -1;
@@ -101,6 +116,10 @@ export class Pet {
     if (this.style.spriteSheet) {
       this.renderer.loadSpriteSheet(this.style.spriteSheet.imageSrc);
     }
+    // Re-apply canvas size since different styles may have different pixel size needs
+    const pixelSize = this.getCanvasPixelSize();
+    this.ctx.canvas.width = pixelSize;
+    this.ctx.canvas.height = pixelSize;
   }
 
   transitionTo(state: PetState) {

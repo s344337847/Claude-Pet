@@ -36,18 +36,18 @@ pet.setFacing(walkDirection);
 function applyScale(s: number) {
   scale = s;
   pet.setScale(s);
-  const logicalSize = 32 * s;
-  const height = tooltipExpanded ? logicalSize + TOOLTIP_EXTRA_LOGICAL : logicalSize;
-  canvas.style.width = `${logicalSize}px`;
-  canvas.style.height = `${logicalSize}px`;
-  document.body.style.width = `${logicalSize}px`;
+  const displaySize = pet.getDisplaySize();
+  const height = tooltipExpanded ? displaySize + TOOLTIP_EXTRA_LOGICAL : displaySize;
+  canvas.style.width = `${displaySize}px`;
+  canvas.style.height = `${displaySize}px`;
+  document.body.style.width = `${displaySize}px`;
   document.body.style.height = `${height}px`;
-  document.documentElement.style.width = `${logicalSize}px`;
+  document.documentElement.style.width = `${displaySize}px`;
   document.documentElement.style.height = `${height}px`;
   const wrapper = document.getElementById('pet-wrapper') as HTMLElement | null;
   if (wrapper) {
-    wrapper.style.width = `${logicalSize}px`;
-    wrapper.style.height = `${logicalSize}px`;
+    wrapper.style.width = `${displaySize}px`;
+    wrapper.style.height = `${displaySize}px`;
   }
 }
 
@@ -78,7 +78,7 @@ function updateWalk() {
   const state = pet.getCurrentState();
   if (state === 'work' || state === 'success' || state === 'fail') return;
 
-  const physSize = logicalToPhysical(32 * scale);
+  const physSize = logicalToPhysical(pet.getDisplaySize());
 
   if (state === 'exit') {
     const targetY = screenH;
@@ -133,9 +133,9 @@ let typewriterTimer: ReturnType<typeof setTimeout> | null = null;
 async function expandWindowForTooltip() {
   if (tooltipExpanded) return;
   tooltipExpanded = true;
-  const logicalSize = 32 * scale;
-  const newHeight = logicalSize + TOOLTIP_EXTRA_LOGICAL;
-  await win.setSize(new LogicalSize(logicalSize, newHeight));
+  const displaySize = pet.getDisplaySize();
+  const newHeight = displaySize + TOOLTIP_EXTRA_LOGICAL;
+  await win.setSize(new LogicalSize(displaySize, newHeight));
   document.body.style.height = `${newHeight}px`;
   document.documentElement.style.height = `${newHeight}px`;
   winY -= Math.round(TOOLTIP_EXTRA_LOGICAL * scaleFactor);
@@ -145,10 +145,10 @@ async function expandWindowForTooltip() {
 async function restoreWindowSize() {
   if (!tooltipExpanded) return;
   tooltipExpanded = false;
-  const logicalSize = 32 * scale;
-  await win.setSize(new LogicalSize(logicalSize, logicalSize));
-  document.body.style.height = `${logicalSize}px`;
-  document.documentElement.style.height = `${logicalSize}px`;
+  const displaySize = pet.getDisplaySize();
+  await win.setSize(new LogicalSize(displaySize, displaySize));
+  document.body.style.height = `${displaySize}px`;
+  document.documentElement.style.height = `${displaySize}px`;
   winY += Math.round(TOOLTIP_EXTRA_LOGICAL * scaleFactor);
   await win.setPosition(new PhysicalPosition(Math.round(winX), Math.round(winY)));
 }
@@ -246,10 +246,12 @@ listen<number>('scale_change', async (event) => {
 
   const pos = await win.outerPosition();
 
+  const oldDisplaySize = pet.getDisplaySize();
   applyScale(newScale);
+  const newDisplaySize = pet.getDisplaySize();
 
-  const oldPhysSize = Math.round(32 * oldScale * scaleFactor);
-  const newPhysSize = Math.round(32 * newScale * scaleFactor);
+  const oldPhysSize = Math.round(oldDisplaySize * scaleFactor);
+  const newPhysSize = Math.round(newDisplaySize * scaleFactor);
 
   winX = pos.x;
   winY = pos.y + oldPhysSize - newPhysSize;
