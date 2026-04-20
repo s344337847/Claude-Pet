@@ -1,6 +1,7 @@
 import { listen } from '@tauri-apps/api/event';
 import { invoke } from '@tauri-apps/api/core';
 import { getCurrentWindow, PhysicalPosition, currentMonitor } from '@tauri-apps/api/window';
+import { LogicalSize } from '@tauri-apps/api/dpi';
 import { Pet } from './Pet';
 import { defaultStyle, STYLES } from './styles';
 import type { PetState } from '../types';
@@ -23,8 +24,10 @@ let stateTimer = 0;
 const MARGIN = 10;     // physical pixels
 const BOTTOM_OFFSET = 50; // physical pixels, matches Rust
 const SLIDE_SPEED = 10; // physical pixels per frame
+const TOOLTIP_EXTRA_LOGICAL = 50;
 
 let targetFps = 60;
+let tooltipExpanded = false;
 let lastFrameTime = 0;
 
 const pet = new Pet(defaultStyle, scale, ctx);
@@ -33,12 +36,18 @@ function applyScale(s: number) {
   scale = s;
   pet.setScale(s);
   const logicalSize = 32 * s;
+  const height = tooltipExpanded ? logicalSize + TOOLTIP_EXTRA_LOGICAL : logicalSize;
   canvas.style.width = `${logicalSize}px`;
   canvas.style.height = `${logicalSize}px`;
   document.body.style.width = `${logicalSize}px`;
-  document.body.style.height = `${logicalSize}px`;
+  document.body.style.height = `${height}px`;
   document.documentElement.style.width = `${logicalSize}px`;
-  document.documentElement.style.height = `${logicalSize}px`;
+  document.documentElement.style.height = `${height}px`;
+  const wrapper = document.getElementById('pet-wrapper') as HTMLElement | null;
+  if (wrapper) {
+    wrapper.style.width = `${logicalSize}px`;
+    wrapper.style.height = `${logicalSize}px`;
+  }
 }
 
 function logicalToPhysical(v: number): number {
@@ -118,28 +127,75 @@ function updateWalk() {
 const tooltipEl = document.getElementById('pet-tooltip') as HTMLDivElement;
 let typewriterTimer: ReturnType<typeof setTimeout> | null = null;
 
-function clearTooltip() {
+async function expandWindowForTooltip() {
+  if (tooltipExpanded) return;
+  tooltipExpanded = true;
+  const logicalSize = 32 * scale;
+  const newHeight = logicalSize + TOOLTIP_EXTRA_LOGICAL;
+  await win.setSize(new LogicalSize(logicalSize, newHeight));
+  document.body.style.height = `${newHeight}px`;
+  document.documentElement.style.height = `${newHeight}px`;
+  winY -= Math.round(TOOLTIP_EXTRA_LOGICAL * scaleFactor);
+  await win.setPosition(new PhysicalPosition(Math.round(winX), Math.round(winY)));
+}
+
+async function restoreWindowSize() {
+  if (!tooltipExpanded) return;
+  tooltipExpanded = false;
+  const logicalSize = 32 * scale;
+  await win.setSize(new LogicalSize(logicalSize, logicalSize));
+  document.body.style.height = `${logicalSize}px`;
+  document.documentElement.style.height = `${logicalSize}px`;
+  winY += Math.round(TOOLTIP_EXTRA_LOGICAL * scaleFactor);
+  await win.setPosition(new PhysicalPosition(Math.round(winX), Math.round(winY)));
+}
+
+async function clearTooltip() {
   if (typewriterTimer) {
     clearTimeout(typewriterTimer);
     typewriterTimer = null;
   }
   tooltipEl.textContent = '';
   tooltipEl.classList.remove('visible', 'typing-done');
+  tooltipEl.removeAttribute('data-state');
+  await restoreWindowSize();
 }
 
-function showTypewriter(text: string) {
-  clearTooltip();
+async function showTypewriter(text: string, state: 'success' | 'fail' | 'work' = 'success') {
+  await clearTooltip();
+  await expandWindowForTooltip();
+  tooltipEl.setAttribute('data-state', state);
   tooltipEl.classList.add('visible');
   let index = 0;
   tooltipEl.classList.remove('typing-done');
 
+  const scrollInner = document.createElement('span');
+  scrollInner.className = 'scroll-inner';
+  tooltipEl.appendChild(scrollInner);
+
+  const cursorEl = document.createElement('span');
+  cursorEl.className = 'cursor';
+
   function typeNext() {
     if (index <= text.length) {
-      tooltipEl.textContent = text.slice(0, index);
+      scrollInner.textContent = text.slice(0, index);
+      scrollInner.appendChild(cursorEl);
       index++;
       typewriterTimer = setTimeout(typeNext, 40);
     } else {
       tooltipEl.classList.add('typing-done');
+      // Check overflow and enable scrolling if needed
+      const style = getComputedStyle(tooltipEl);
+      const padLeft = parseFloat(style.paddingLeft);
+      const padRight = parseFloat(style.paddingRight);
+      const availableWidth = tooltipEl.clientWidth - padLeft - padRight;
+      const overflow = scrollInner.scrollWidth - availableWidth;
+      if (overflow > 0) {
+        tooltipEl.style.setProperty('--scroll-offset', `${-overflow}px`);
+        const duration = Math.max(4, 4 + overflow / 20);
+        tooltipEl.style.setProperty('--scroll-duration', `${duration}s`);
+        tooltipEl.classList.add('scrolling');
+      }
       typewriterTimer = null;
     }
   }
@@ -196,6 +252,11 @@ listen<number>('scale_change', async (event) => {
   winY = pos.y + oldPhysSize - newPhysSize;
 
   await win.setPosition(new PhysicalPosition(Math.round(winX), Math.round(winY)));
+
+  if (tooltipExpanded) {
+    tooltipExpanded = false;
+    await expandWindowForTooltip();
+  }
 });
 
 function tick(timestamp: number) {
@@ -214,6 +275,8 @@ function tick(timestamp: number) {
     stateTimer++;
     if (stateTimer > 120) {
       stateTimer = 0;
+      // 保留提示信息直至进入work状态
+      // clearTooltip();
       pet.setState('idle');
     }
   }

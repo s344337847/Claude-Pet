@@ -109,10 +109,11 @@ pub fn run() {
             let show_i = MenuItemBuilder::new("Show").id("show").build(app)?;
             let hide_i = MenuItemBuilder::new("Hide").id("hide").build(app)?;
             let settings_i = MenuItemBuilder::new("Settings").id("settings").build(app)?;
+            let devtools_i = MenuItemBuilder::new("DevTools").id("devtools").build(app)?;
             let reset_i = MenuItemBuilder::new("Reset Position").id("reset").build(app)?;
             let quit_i = MenuItemBuilder::new("Quit").id("quit").build(app)?;
             let menu = MenuBuilder::new(app)
-                .items(&[&show_i, &hide_i, &settings_i, &reset_i, &quit_i])
+                .items(&[&show_i, &hide_i, &settings_i, &devtools_i, &reset_i, &quit_i])
                 .build()?;
 
             let tray_icon = app.default_window_icon().cloned().expect("default window icon not found");
@@ -148,6 +149,11 @@ pub fn run() {
                             if let Some(w) = app.get_webview_window("settings") {
                                 let _ = w.show();
                                 let _ = w.set_focus();
+                            }
+                        }
+                        "devtools" => {
+                            if let Some(w) = first_pet_window(app) {
+                                let _ = w.open_devtools();
                             }
                         }
                         "reset" => {
