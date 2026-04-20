@@ -17,6 +17,7 @@ pub struct PetInstance {
     pub label: String,
     pub session_id: Option<String>,
     pub cwd: Option<String>,
+    pub style_name: String,
 }
 
 pub struct PetManager {
@@ -34,8 +35,8 @@ impl PetManager {
         })
     }
 
-    fn pick_style(&self) -> String {
-        let counts = self.style_counts.lock().unwrap();
+    fn pick_and_commit_style(&self) -> String {
+        let mut counts = self.style_counts.lock().unwrap();
         let mut min_count = u32::MAX;
         let mut candidates = Vec::new();
         for name in STYLE_NAMES {
@@ -48,12 +49,18 @@ impl PetManager {
                 candidates.push(*name);
             }
         }
-        candidates[fastrand::usize(..candidates.len())].to_string()
+        let chosen = candidates[fastrand::usize(..candidates.len())].to_string();
+        *counts.entry(chosen.clone()).or_insert(0) += 1;
+        chosen
     }
 
-    fn commit_style(&self, style_name: &str) {
+    fn release_style(&self, style_name: &str) {
         let mut counts = self.style_counts.lock().unwrap();
-        *counts.entry(style_name.to_string()).or_insert(0) += 1;
+        if let Some(c) = counts.get_mut(style_name) {
+            if *c > 0 {
+                *c -= 1;
+            }
+        }
     }
 
     pub fn handle_event(self: &Arc<Self>, event: String, session_id: Option<String>, cwd: Option<String>) {
@@ -123,10 +130,11 @@ impl PetManager {
         cwd: Option<String>,
     ) -> String {
         let label = session_id.clone().expect("create_pet requires a session_id");
-        let style_name = self.pick_style();
+        let style_name = self.pick_and_commit_style();
         {
             let mut pets = self.pets.lock().unwrap();
             if pets.contains_key(&label) {
+                self.release_style(&style_name);
                 return label;
             }
             pets.insert(
@@ -135,6 +143,7 @@ impl PetManager {
                     label: label.clone(),
                     session_id,
                     cwd: cwd.clone(),
+                    style_name: style_name.clone(),
                 },
             );
         }
@@ -142,7 +151,6 @@ impl PetManager {
         let app_handle = self.app_handle.clone();
         let window_label = label.clone();
         let style_for_event = style_name.clone();
-        let manager = self.clone();
         let follow_up = follow_up_state.clone();
         tauri::async_runtime::spawn(async move {
             let label_for_event = window_label.clone();
@@ -172,7 +180,6 @@ impl PetManager {
             {
                 let _ = window.set_ignore_cursor_events(true);
                 crate::position_window_bottom_right(&window, logical_size);
-                manager.commit_style(&style_for_event);
                 let _ = app_handle.emit(
                     "pet_style_init",
                     serde_json::json!({
@@ -219,7 +226,9 @@ impl PetManager {
     pub fn destroy_pet(self: &Arc<Self>, label: String) {
         {
             let mut pets = self.pets.lock().unwrap();
-            pets.remove(&label);
+            if let Some(pet) = pets.remove(&label) {
+                self.release_style(&pet.style_name);
+            }
         }
         if let Some(window) = self.app_handle.get_webview_window(&label) {
             let _ = window.close();

@@ -4,6 +4,7 @@ interface PetInstance {
   label: string;
   session_id: string | null;
   cwd: string | null;
+  style_name: string;
 }
 
 const listEl = document.getElementById('pet-list') as HTMLDivElement;
@@ -32,6 +33,10 @@ function render(pets: PetInstance[]) {
     const info = document.createElement('div');
     info.className = 'pet-info';
 
+    const styleSpan = document.createElement('span');
+    styleSpan.className = 'pet-style';
+    styleSpan.textContent = p.style_name;
+
     const labelSpan = document.createElement('span');
     labelSpan.className = 'pet-label';
     labelSpan.textContent = p.label;
@@ -44,6 +49,7 @@ function render(pets: PetInstance[]) {
     cwdSpan.className = 'pet-cwd';
     cwdSpan.textContent = p.cwd || 'No directory';
 
+    info.appendChild(styleSpan);
     info.appendChild(labelSpan);
     info.appendChild(sessionSpan);
     info.appendChild(cwdSpan);

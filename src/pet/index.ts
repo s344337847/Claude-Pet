@@ -289,6 +289,16 @@ function tick(timestamp: number) {
   requestAnimationFrame(tick);
 }
 
-Promise.all([initScreenSize(), initConfig()]).then(() => {
+Promise.all([initScreenSize(), initConfig()]).then(async () => {
+  try {
+    const pets = await invoke<Array<{ label: string; style_name?: string }>>('list_pets');
+    const myPet = pets.find((p) => p.label === label);
+    if (myPet?.style_name) {
+      const style = STYLES.find((s) => s.name === myPet.style_name) || defaultStyle;
+      pet.setStyle(style);
+    }
+  } catch {
+    // ignore
+  }
   requestAnimationFrame(tick);
 });
