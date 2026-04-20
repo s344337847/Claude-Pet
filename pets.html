@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Pet Manager</title>
+  <style>
+    :root {
+      --bg: #121212;
+      --surface: #1e1e1e;
+      --surface-hover: #2a2a2a;
+      --border: #333;
+      --text: #eee;
+      --text-secondary: #999;
+      --accent: #6b8cff;
+      --accent-hover: #5a7aee;
+      --danger: #ff6b6b;
+      --danger-hover: #ff5555;
+      --radius: 10px;
+      --radius-sm: 6px;
+      --shadow: 0 4px 20px rgba(0,0,0,0.35);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, sans-serif;
+      padding: 20px;
+      background: var(--bg);
+      color: var(--text);
+      font-size: 13px;
+      line-height: 1.5;
+      min-height: 100vh;
+    }
+
+    h1 {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 16px;
+      letter-spacing: -0.2px;
+    }
+
+    .empty {
+      color: var(--text-secondary);
+      font-style: italic;
+      padding: 20px 0;
+      text-align: center;
+    }
+
+    .pet-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .pet-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 12px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      transition: background 0.15s ease;
+    }
+
+    .pet-row:hover {
+      background: var(--surface-hover);
+    }
+
+    .pet-info {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      min-width: 0;
+      flex: 1;
+    }
+
+    .pet-label {
+      font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .pet-session {
+      font-size: 11px;
+      color: var(--text-secondary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .pet-cwd {
+      font-size: 11px;
+      color: var(--text-secondary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      font-style: italic;
+    }
+
+    .btn-delete {
+      padding: 5px 10px;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--danger);
+      background: transparent;
+      border: 1px solid var(--danger);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: all 0.15s ease;
+      margin-left: 10px;
+      flex-shrink: 0;
+    }
+
+    .btn-delete:hover {
+      background: var(--danger);
+      color: #fff;
+    }
+
+    .btn-refresh {
+      padding: 5px 12px;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: all 0.15s ease;
+      margin-bottom: 12px;
+    }
+
+    .btn-refresh:hover {
+      background: var(--surface-hover);
+    }
+  </style>
+</head>
+<body>
+  <h1>Pet Manager</h1>
+  <button class="btn-refresh" id="btn-refresh">Refresh</button>
+  <div id="pet-list" class="pet-list"></div>
+
+  <script type="module" src="/src/pets.ts"></script>
+</body>
+</html>

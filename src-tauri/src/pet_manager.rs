@@ -1,6 +1,7 @@
 use crate::config::Config;
 use crate::state::{PetState, StatePayload};
 use fastrand;
+use serde::Serialize;
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 use tauri::{Emitter, Manager};
@@ -11,9 +12,11 @@ const STORE_PATH: &str = "config.json";
 const CONFIG_KEY: &str = "config";
 const BASE_LOGICAL_SIZE: f64 = 32.0;
 
+#[derive(Debug, Clone, Serialize)]
 pub struct PetInstance {
     pub label: String,
     pub session_id: Option<String>,
+    pub cwd: Option<String>,
 }
 
 pub struct PetManager {
@@ -86,7 +89,13 @@ impl PetManager {
             };
             self.create_pet(Some(sid.clone()), follow_up, cwd.clone());
         } else {
-            // 宠物已存在，直接发送目标状态
+            // 宠物已存在，更新 cwd 并发送目标状态
+            {
+                let mut pets = self.pets.lock().unwrap();
+                if let Some(pet) = pets.get_mut(sid) {
+                    pet.cwd = cwd.clone();
+                }
+            }
             let payload = StatePayload {
                 state: new_state.clone(),
                 label: sid.clone(),
@@ -125,6 +134,7 @@ impl PetManager {
                 PetInstance {
                     label: label.clone(),
                     session_id,
+                    cwd: cwd.clone(),
                 },
             );
         }
@@ -199,6 +209,11 @@ impl PetManager {
         });
 
         label
+    }
+
+    pub fn list_pets(&self) -> Vec<PetInstance> {
+        let pets = self.pets.lock().unwrap();
+        pets.values().cloned().collect()
     }
 
     pub fn destroy_pet(self: &Arc<Self>, label: String) {

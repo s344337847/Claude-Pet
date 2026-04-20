@@ -67,12 +67,17 @@ fn destroy_pet(label: String, state: tauri::State<Arc<PetManager>>) {
     state.destroy_pet(label);
 }
 
+#[tauri::command]
+fn list_pets(state: tauri::State<Arc<PetManager>>) -> Vec<pet_manager::PetInstance> {
+    state.list_pets()
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_store::Builder::default().build())
-        .invoke_handler(tauri::generate_handler![get_config, save_config, create_pet_window, destroy_pet])
+        .invoke_handler(tauri::generate_handler![get_config, save_config, create_pet_window, destroy_pet, list_pets])
         .setup(|app| {
             let main_window = app.get_webview_window("main").expect("main window not found");
             let _ = main_window.set_ignore_cursor_events(true);
@@ -88,6 +93,7 @@ pub fn run() {
             };
 
             let pet_manager = PetManager::new(app.handle().clone());
+            app.manage(pet_manager.clone());
             tauri::async_runtime::spawn(async move {
                 match server::start_server(pet_manager).await {
                     Ok(port) => println!("HTTP server started on port {}", port),
@@ -109,11 +115,12 @@ pub fn run() {
             let show_i = MenuItemBuilder::new("Show").id("show").build(app)?;
             let hide_i = MenuItemBuilder::new("Hide").id("hide").build(app)?;
             let settings_i = MenuItemBuilder::new("Settings").id("settings").build(app)?;
+            let pets_i = MenuItemBuilder::new("Pet Manager").id("pets").build(app)?;
             let devtools_i = MenuItemBuilder::new("DevTools").id("devtools").build(app)?;
             let reset_i = MenuItemBuilder::new("Reset Position").id("reset").build(app)?;
             let quit_i = MenuItemBuilder::new("Quit").id("quit").build(app)?;
             let menu = MenuBuilder::new(app)
-                .items(&[&show_i, &hide_i, &settings_i, &devtools_i, &reset_i, &quit_i])
+                .items(&[&show_i, &hide_i, &settings_i, &pets_i, &devtools_i, &reset_i, &quit_i])
                 .build()?;
 
             let tray_icon = app.default_window_icon().cloned().expect("default window icon not found");
@@ -149,6 +156,36 @@ pub fn run() {
                             if let Some(w) = app.get_webview_window("settings") {
                                 let _ = w.show();
                                 let _ = w.set_focus();
+                            }
+                        }
+                        "pets" => {
+                            if let Some(w) = app.get_webview_window("pets") {
+                                let _ = w.show();
+                                let _ = w.set_focus();
+                            } else if let Ok(w) = tauri::WebviewWindowBuilder::new(
+                                app,
+                                "pets",
+                                tauri::WebviewUrl::App("pets.html".into()),
+                            )
+                            .title("Pet Manager")
+                            .inner_size(320.0, 400.0)
+                            .decorations(true)
+                            .transparent(false)
+                            .always_on_top(false)
+                            .skip_taskbar(false)
+                            .resizable(false)
+                            .center()
+                            .visible(true)
+                            .focused(true)
+                            .build()
+                            {
+                                let w_clone = w.clone();
+                                w.on_window_event(move |event| {
+                                    if let tauri::WindowEvent::CloseRequested { api, .. } = event {
+                                        api.prevent_close();
+                                        let _ = w_clone.hide();
+                                    }
+                                });
                             }
                         }
                         "devtools" => {
