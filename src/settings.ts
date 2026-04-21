@@ -1,4 +1,6 @@
 import { invoke } from "@tauri-apps/api/core";
+import { listen } from "@tauri-apps/api/event";
+import { getVersion } from "@tauri-apps/api/app";
 import { isEnabled, enable, disable } from "@tauri-apps/plugin-autostart";
 import { setLanguage, t } from "./i18n";
 
@@ -42,6 +44,102 @@ let currentConfig: Config = {
   language: "en",
   style_name: "",
 };
+
+/* ── Tab switching ── */
+
+function switchTab(tab: string) {
+  document.querySelectorAll<HTMLButtonElement>(".nav-btn").forEach((btn) => {
+    btn.classList.toggle("active", btn.dataset.tab === tab);
+  });
+  document.querySelectorAll<HTMLDivElement>(".tab-panel").forEach((panel) => {
+    panel.classList.toggle("active", panel.id === `tab-${tab}`);
+  });
+}
+
+document.querySelectorAll<HTMLButtonElement>(".nav-btn").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    switchTab(btn.dataset.tab!);
+  });
+});
+
+listen("switch_tab", (event) => {
+  switchTab(event.payload as string);
+}).catch(console.error);
+
+/* ── Pets (merged from pets.ts) ── */
+
+interface PetInstance {
+  label: string;
+  session_id: string | null;
+  cwd: string | null;
+  style_name: string;
+}
+
+const listEl = document.getElementById("pet-list") as HTMLDivElement;
+const refreshBtn = document.getElementById("btn-refresh") as HTMLButtonElement;
+
+async function loadPets() {
+  const pets = await invoke<PetInstance[]>("list_pets");
+  renderPets(pets);
+}
+
+function renderPets(pets: PetInstance[]) {
+  listEl.innerHTML = "";
+
+  if (pets.length === 0) {
+    const empty = document.createElement("div");
+    empty.className = "empty";
+    empty.dataset.i18n = "no-pets";
+    empty.textContent = t("no-pets");
+    listEl.appendChild(empty);
+    return;
+  }
+
+  for (const p of pets) {
+    const row = document.createElement("div");
+    row.className = "pet-row";
+
+    const info = document.createElement("div");
+    info.className = "pet-info";
+
+    const styleSpan = document.createElement("span");
+    styleSpan.className = "pet-style";
+    styleSpan.textContent = p.style_name;
+
+    const labelSpan = document.createElement("span");
+    labelSpan.className = "pet-label";
+    labelSpan.textContent = p.label;
+
+    const sessionSpan = document.createElement("span");
+    sessionSpan.className = "pet-session";
+    sessionSpan.textContent = p.session_id || t("no-session");
+
+    const cwdSpan = document.createElement("span");
+    cwdSpan.className = "pet-cwd";
+    cwdSpan.textContent = p.cwd || t("no-directory");
+
+    info.appendChild(styleSpan);
+    info.appendChild(labelSpan);
+    info.appendChild(sessionSpan);
+    info.appendChild(cwdSpan);
+
+    const deleteBtn = document.createElement("button");
+    deleteBtn.className = "btn-delete";
+    deleteBtn.textContent = t("delete");
+    deleteBtn.addEventListener("click", async () => {
+      await invoke("destroy_pet", { label: p.label });
+      await loadPets();
+    });
+
+    row.appendChild(info);
+    row.appendChild(deleteBtn);
+    listEl.appendChild(row);
+  }
+}
+
+refreshBtn.addEventListener("click", loadPets);
+
+/* ── Settings ── */
 
 const elScaleRange = document.getElementById("scale-range") as HTMLInputElement;
 const elScaleValue = document.getElementById("scale-value") as HTMLDivElement;
@@ -214,7 +312,6 @@ elMonitorSelect.addEventListener("change", () => {
 
 async function loadStyles() {
   const styles = await invoke<string[]>("list_styles");
-  // 保留第一个 "随机" 选项
   while (elStyleSelect.options.length > 1) {
     elStyleSelect.remove(1);
   }
@@ -243,16 +340,26 @@ async function init() {
   await loadMonitors();
   await loadStyles();
 
-  // Apply i18n after config is loaded
   setLanguage(currentConfig.language || "en", false);
   document.title = t("app-title");
 
-  // Load autostart state
   try {
     toggleAutostart.checked = await isEnabled();
   } catch {
     // ignore if plugin unavailable
   }
+
+  // Load version
+  try {
+    const version = await getVersion();
+    const versionEl = document.getElementById("about-version") as HTMLDivElement;
+    if (versionEl) versionEl.textContent = `v${version}`;
+  } catch {
+    // ignore
+  }
+
+  // Load pets list in background
+  loadPets().catch(console.error);
 }
 
 toggleAutostart.addEventListener("change", async () => {
@@ -264,7 +371,6 @@ toggleAutostart.addEventListener("change", async () => {
     }
   } catch (err) {
     console.error("Failed to change autostart setting:", err);
-    // Revert toggle on error
     toggleAutostart.checked = await isEnabled().catch(() => false);
   }
 });

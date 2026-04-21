@@ -1,6 +1,6 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "claude-pet",
+  "productName": "Claude Pet",
   "version": "0.1.0",
   "identifier": "com.administrator.claude-pet",
   "build": {
@@ -30,7 +30,7 @@
       {
         "label": "settings",
         "title": "Claude Pet Settings",
-        "width": 350,
+        "width": 420,
         "height": 480,
         "decorations": true,
         "transparent": false,

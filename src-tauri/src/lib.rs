@@ -165,7 +165,7 @@ fn set_monitor(app: tauri::AppHandle, monitor_name: Option<String>) -> Result<()
 
     for (_, window) in app.webview_windows() {
         let label = window.label();
-        if label == "main" || label == "settings" || label == "pets" {
+        if label == "main" || label == "settings" {
             continue;
         }
         let sf = window.scale_factor().unwrap_or(1.0);
@@ -289,33 +289,10 @@ pub fn run() {
                             }
                         }
                         "pets" => {
-                            if let Some(w) = app.get_webview_window("pets") {
+                            if let Some(w) = app.get_webview_window("settings") {
                                 let _ = w.show();
                                 let _ = w.set_focus();
-                            } else if let Ok(w) = tauri::WebviewWindowBuilder::new(
-                                app,
-                                "pets",
-                                tauri::WebviewUrl::App("pets.html".into()),
-                            )
-                            .title("Pet Manager")
-                            .inner_size(320.0, 400.0)
-                            .decorations(true)
-                            .transparent(false)
-                            .always_on_top(false)
-                            .skip_taskbar(false)
-                            .resizable(false)
-                            .center()
-                            .visible(true)
-                            .focused(true)
-                            .build()
-                            {
-                                let w_clone = w.clone();
-                                w.on_window_event(move |event| {
-                                    if let tauri::WindowEvent::CloseRequested { api, .. } = event {
-                                        api.prevent_close();
-                                        let _ = w_clone.hide();
-                                    }
-                                });
+                                let _ = w.emit("switch_tab", "pets");
                             }
                         }
                         "devtools" => {

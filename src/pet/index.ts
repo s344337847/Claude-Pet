@@ -238,7 +238,6 @@ listen<number>('fps_limit_change', (event) => {
 });
 
 listen<number>('scale_change', async (event) => {
-  const oldScale = scale;
   const newScale = event.payload;
 
   const monitor = await currentMonitor();

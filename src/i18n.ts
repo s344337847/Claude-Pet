@@ -46,6 +46,13 @@ const en: Dict = {
   "style-ayaka": "Ayaka",
   "style-ganyu": "Ganyu",
   "style-hint": "Choose the default pet style. New pets will use this style.",
+
+  "about-desc": "A pixel-art desktop pet that lives on your screen and reports Claude Code task status in real time.",
+  "about-info": "Info",
+  "about-author": "Author",
+  "about-license": "License",
+  "about-tech": "Tech Stack",
+  "about-copyright": "Made with love for Claude Code users.",
 };
 
 const zh: Dict = {
@@ -92,6 +99,13 @@ const zh: Dict = {
   "style-ayaka": "绫华",
   "style-ganyu": "甘雨",
   "style-hint": "选择默认宠物样式。新创建的宠物将使用此样式。",
+
+  "about-desc": "一款像素风桌面宠物，常驻屏幕角落，实时汇报 Claude Code 的任务状态。",
+  "about-info": "信息",
+  "about-author": "作者",
+  "about-license": "许可证",
+  "about-tech": "技术栈",
+  "about-copyright": "专为 Claude Code 用户打造。",
 };
 
 const dicts: Record<string, Dict> = { en, zh };

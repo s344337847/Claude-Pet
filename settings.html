@@ -14,6 +14,8 @@
       --text-secondary: #999;
       --accent: #6b8cff;
       --accent-hover: #5a7aee;
+      --danger: #ff6b6b;
+      --danger-hover: #ff5555;
       --radius: 10px;
       --radius-sm: 6px;
       --shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
@@ -27,14 +29,76 @@
 
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, sans-serif;
-      padding: 24px;
       background: var(--bg);
       color: var(--text);
       font-size: 14px;
       line-height: 1.5;
       min-height: 100vh;
+      overflow: hidden;
     }
 
+    /* Layout */
+    .app-layout {
+      display: flex;
+      height: 100vh;
+    }
+
+    .sidebar {
+      width: 52px;
+      flex-shrink: 0;
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding-top: 16px;
+      gap: 8px;
+      background: var(--surface);
+    }
+
+    .nav-btn {
+      width: 40px;
+      height: 40px;
+      border: none;
+      border-radius: var(--radius-sm);
+      background: transparent;
+      color: var(--text-secondary);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s ease, color 0.15s ease;
+    }
+
+    .nav-btn:hover {
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text);
+    }
+
+    .nav-btn.active {
+      background: rgba(107, 140, 255, 0.15);
+      color: var(--accent);
+    }
+
+    .nav-btn svg {
+      width: 20px;
+      height: 20px;
+    }
+
+    .content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+    }
+
+    .tab-panel {
+      display: none;
+    }
+
+    .tab-panel.active {
+      display: block;
+    }
+
+    /* Settings styles */
     h1 {
       font-size: 18px;
       font-weight: 600;
@@ -338,141 +402,442 @@
       transform: translateX(18px);
       background: #fff;
     }
+
+    /* Pet Manager styles */
+    .empty {
+      color: var(--text-secondary);
+      font-style: italic;
+      padding: 20px 0;
+      text-align: center;
+    }
+
+    .pet-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .pet-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 12px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      transition: background 0.15s ease;
+    }
+
+    .pet-row:hover {
+      background: var(--surface-hover);
+    }
+
+    .pet-info {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      min-width: 0;
+      flex: 1;
+    }
+
+    .pet-label {
+      font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .pet-session {
+      font-size: 11px;
+      color: var(--text-secondary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .pet-style {
+      font-size: 10px;
+      color: var(--accent);
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .pet-cwd {
+      font-size: 11px;
+      color: var(--text-secondary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      font-style: italic;
+    }
+
+    .btn-delete {
+      padding: 5px 10px;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--danger);
+      background: transparent;
+      border: 1px solid var(--danger);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: all 0.15s ease;
+      margin-left: 10px;
+      flex-shrink: 0;
+    }
+
+    .btn-delete:hover {
+      background: var(--danger);
+      color: #fff;
+    }
+
+    .btn-refresh {
+      padding: 5px 12px;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: all 0.15s ease;
+      margin-bottom: 12px;
+    }
+
+    .btn-refresh:hover {
+      background: var(--surface-hover);
+    }
+
+    /* About page */
+    .about-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      padding-top: 32px;
+    }
+
+    .about-logo {
+      width: 64px;
+      height: 64px;
+      border-radius: var(--radius);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 16px;
+    }
+
+    .about-logo svg {
+      width: 36px;
+      height: 36px;
+      color: var(--accent);
+    }
+
+    .about-name {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .about-version {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 12px;
+      color: var(--text-secondary);
+      background: var(--bg);
+      padding: 2px 8px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      margin-bottom: 20px;
+    }
+
+    .about-desc {
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+      max-width: 280px;
+      margin-bottom: 20px;
+    }
+
+    .about-section {
+      width: 100%;
+      max-width: 280px;
+      text-align: left;
+      margin-bottom: 16px;
+    }
+
+    .about-section-title {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+    }
+
+    .about-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 13px;
+      padding: 6px 0;
+      border-bottom: 1px solid var(--border);
+      color: var(--text);
+    }
+
+    .about-row:last-child {
+      border-bottom: none;
+    }
+
+    .about-row span:last-child {
+      color: var(--text-secondary);
+    }
+
+    .about-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .about-tag {
+      font-size: 11px;
+      font-weight: 500;
+      padding: 3px 8px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text-secondary);
+    }
+
+    .about-footer {
+      margin-top: auto;
+      padding-top: 24px;
+      font-size: 11px;
+      color: var(--text-secondary);
+    }
   </style>
 </head>
 
 <body>
-  <h1 data-i18n="app-title">Claude Pet Settings</h1>
+  <div class="app-layout">
+    <aside class="sidebar">
+      <button class="nav-btn active" data-tab="settings" title="Settings">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+          stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3" />
+          <path
+            d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
+        </svg>
+      </button>
+      <button class="nav-btn" data-tab="pets" title="Pet Manager">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+          stroke-linejoin="round">
+          <ellipse cx="8.5" cy="6.5" rx="2" ry="2.5" />
+          <ellipse cx="15.5" cy="6.5" rx="2" ry="2.5" />
+          <ellipse cx="6" cy="13" rx="1.5" ry="2" />
+          <ellipse cx="18" cy="13" rx="1.5" ry="2" />
+          <ellipse cx="12" cy="16" rx="3.5" ry="3" />
+        </svg>
+      </button>
+      <button class="nav-btn" data-tab="about" title="About">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+          stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10" />
+          <line x1="12" y1="16" x2="12" y2="12" />
+          <line x1="12" y1="8" x2="12.01" y2="8" />
+        </svg>
+      </button>
+    </aside>
 
-  <div class="section">
-    <div class="section-title" data-i18n="section-general">General</div>
-    <div class="row" style="justify-content: space-between;">
-      <span style="font-size: 13px;" data-i18n="autostart-label">Launch on system startup</span>
-      <label class="switch">
-        <input type="checkbox" id="toggle-autostart" />
-        <span class="slider"></span>
-      </label>
-    </div>
-  </div>
+    <main class="content">
+      <!-- Settings Tab -->
+      <div id="tab-settings" class="tab-panel active">
+        <h1 data-i18n="app-title">Claude Pet Settings</h1>
 
-  <div class="section">
-    <div class="section-title" data-i18n="section-language">Language</div>
-    <div class="row">
-      <div class="segmented">
-        <button id="btn-lang-en" data-lang="en" data-i18n="lang-en">English</button>
-        <button id="btn-lang-zh" data-lang="zh" data-i18n="lang-zh">中文</button>
+        <div class="section">
+          <div class="section-title" data-i18n="section-general">General</div>
+          <div class="row" style="justify-content: space-between;">
+            <span style="font-size: 13px;" data-i18n="autostart-label">Launch on system startup</span>
+            <label class="switch">
+              <input type="checkbox" id="toggle-autostart" />
+              <span class="slider"></span>
+            </label>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-title" data-i18n="section-language">Language</div>
+          <div class="row">
+            <div class="segmented">
+              <button id="btn-lang-en" data-lang="en" data-i18n="lang-en">English</button>
+              <button id="btn-lang-zh" data-lang="zh" data-i18n="lang-zh">中文</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-title" data-i18n="section-display">Display</div>
+          <div class="row">
+            <select id="monitor-select"
+              style="width:100%; padding:8px 10px; background:var(--bg); color:var(--text); border:1px solid var(--border); border-radius:var(--radius-sm); font-size:13px; cursor:pointer;">
+              <option value="" data-i18n="monitor-primary">Primary Monitor</option>
+            </select>
+          </div>
+          <div class="row">
+            <span class="size-hint" id="monitor-hint" data-i18n="monitor-hint">Select which screen to display the pet
+              on.</span>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-title" data-i18n="section-size">Window Size</div>
+          <div class="row">
+            <div class="segmented">
+              <button id="btn-small" data-scale="2" data-i18n="size-small">Small</button>
+              <button id="btn-medium" data-scale="4" data-i18n="size-medium">Medium</button>
+              <button id="btn-large" data-scale="6" data-i18n="size-large">Large</button>
+            </div>
+          </div>
+          <div class="row slider-row">
+            <input type="range" id="scale-range" min="1" max="8" step="1" />
+            <div class="scale-badge" id="scale-value">4x</div>
+          </div>
+          <div class="row">
+            <span class="size-hint" id="size-display">Current: 128 x 128</span>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-title" data-i18n="section-performance">Performance</div>
+          <div class="row">
+            <div class="segmented">
+              <button id="btn-fps-15" data-fps="15" data-i18n="fps-15">15 FPS</button>
+              <button id="btn-fps-30" data-fps="30" data-i18n="fps-30">30 FPS</button>
+              <button id="btn-fps-60" data-fps="60" data-i18n="fps-60">60 FPS</button>
+              <button id="btn-fps-0" data-fps="0" data-i18n="fps-unlimited">Unlimited</button>
+            </div>
+          </div>
+          <div class="row">
+            <span class="size-hint" data-i18n="performance-hint">Lower FPS reduces CPU usage when the pet is visible.</span>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-title" data-i18n="section-appearance">Appearance</div>
+          <div class="color-row">
+            <span class="color-label" data-i18n="color-primary">Primary</span>
+            <div class="color-value">
+              <span class="hex-text" id="hex-primary">#6B8CFF</span>
+              <input type="color" id="color-primary" />
+            </div>
+          </div>
+
+          <button class="advanced-toggle" id="toggle-advanced">
+            <span data-i18n="advanced-colors">Advanced colors</span>
+            <span class="chevron">▼</span>
+          </button>
+
+          <div class="advanced-colors" id="advanced-colors">
+            <div class="color-row">
+              <span class="color-label" data-i18n="color-work">Work</span>
+              <div class="color-value">
+                <span class="hex-text" id="hex-work">#FFAA44</span>
+                <input type="color" id="color-work" />
+              </div>
+            </div>
+            <div class="color-row">
+              <span class="color-label" data-i18n="color-success">Success</span>
+              <div class="color-value">
+                <span class="hex-text" id="hex-success">#6B8CFF</span>
+                <input type="color" id="color-success" />
+              </div>
+            </div>
+            <div class="color-row">
+              <span class="color-label" data-i18n="color-fail">Fail</span>
+              <div class="color-value">
+                <span class="hex-text" id="hex-fail">#889999</span>
+                <input type="color" id="color-fail" />
+              </div>
+            </div>
+            <div class="color-row">
+              <span class="color-label" data-i18n="color-sleep">Sleep</span>
+              <div class="color-value">
+                <span class="hex-text" id="hex-sleep">#6B8CFF</span>
+                <input type="color" id="color-sleep" />
+              </div>
+            </div>
+            <div class="row" style="justify-content: flex-end; margin-top: 8px;">
+              <button class="btn-subtle" id="btn-reset-colors" data-i18n="reset-colors">Reset to Primary</button>
+            </div>
+          </div>
+
+          <div class="row" style="margin-top: 12px;">
+            <select id="style-select"
+              style="width:100%; padding:8px 10px; background:var(--bg); color:var(--text); border:1px solid var(--border); border-radius:var(--radius-sm); font-size:13px; cursor:pointer;">
+              <option value="" data-i18n="style-random">Random</option>
+            </select>
+          </div>
+          <div class="row">
+            <span class="size-hint" data-i18n="style-hint">Choose the default pet style. New pets will use this style.</span>
+          </div>
+        </div>
+
+        <p class="hint" data-i18n="settings-hint">Changes are saved automatically. Close this window when you are done.</p>
       </div>
-    </div>
-  </div>
 
-  <div class="section">
-    <div class="section-title" data-i18n="section-display">Display</div>
-    <div class="row">
-      <select id="monitor-select"
-        style="width:100%; padding:8px 10px; background:var(--bg); color:var(--text); border:1px solid var(--border); border-radius:var(--radius-sm); font-size:13px; cursor:pointer;">
-        <option value="" data-i18n="monitor-primary">Primary Monitor</option>
-      </select>
-    </div>
-    <div class="row">
-      <span class="size-hint" id="monitor-hint" data-i18n="monitor-hint">Select which screen to display the pet
-        on.</span>
-    </div>
-  </div>
-
-  <div class="section">
-    <div class="section-title" data-i18n="section-size">Window Size</div>
-    <div class="row">
-      <div class="segmented">
-        <button id="btn-small" data-scale="2" data-i18n="size-small">Small</button>
-        <button id="btn-medium" data-scale="4" data-i18n="size-medium">Medium</button>
-        <button id="btn-large" data-scale="6" data-i18n="size-large">Large</button>
+      <!-- Pet Manager Tab -->
+      <div id="tab-pets" class="tab-panel">
+        <h1 data-i18n="pet-manager-title">Pet Manager</h1>
+        <button class="btn-refresh" id="btn-refresh" data-i18n="refresh">Refresh</button>
+        <div id="pet-list" class="pet-list"></div>
       </div>
-    </div>
-    <div class="row slider-row">
-      <input type="range" id="scale-range" min="1" max="8" step="1" />
-      <div class="scale-badge" id="scale-value">4x</div>
-    </div>
-    <div class="row">
-      <span class="size-hint" id="size-display">Current: 128 x 128</span>
-    </div>
-  </div>
 
-  <div class="section">
-    <div class="section-title" data-i18n="section-performance">Performance</div>
-    <div class="row">
-      <div class="segmented">
-        <button id="btn-fps-15" data-fps="15" data-i18n="fps-15">15 FPS</button>
-        <button id="btn-fps-30" data-fps="30" data-i18n="fps-30">30 FPS</button>
-        <button id="btn-fps-60" data-fps="60" data-i18n="fps-60">60 FPS</button>
-        <button id="btn-fps-0" data-fps="0" data-i18n="fps-unlimited">Unlimited</button>
-      </div>
-    </div>
-    <div class="row">
-      <span class="size-hint" data-i18n="performance-hint">Lower FPS reduces CPU usage when the pet is visible.</span>
-    </div>
-  </div>
+      <!-- About Tab -->
+      <div id="tab-about" class="tab-panel">
+        <div class="about-wrap">
+          <div class="about-logo">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <ellipse cx="8.5" cy="6.5" rx="2" ry="2.5" />
+              <ellipse cx="15.5" cy="6.5" rx="2" ry="2.5" />
+              <ellipse cx="6" cy="13" rx="1.5" ry="2" />
+              <ellipse cx="18" cy="13" rx="1.5" ry="2" />
+              <ellipse cx="12" cy="16" rx="3.5" ry="3" />
+            </svg>
+          </div>
+          <div class="about-name">Claude Pet</div>
+          <div class="about-version" id="about-version">v0.1.0</div>
+          <p class="about-desc" data-i18n="about-desc">A pixel-art desktop pet that lives on your screen and reports Claude Code task status in real time.</p>
 
-  <div class="section">
-    <div class="section-title" data-i18n="section-appearance">Appearance</div>
-    <div class="color-row">
-      <span class="color-label" data-i18n="color-primary">Primary</span>
-      <div class="color-value">
-        <span class="hex-text" id="hex-primary">#6B8CFF</span>
-        <input type="color" id="color-primary" />
-      </div>
-    </div>
+          <div class="about-section">
+            <div class="about-section-title" data-i18n="about-info">Info</div>
+            <div class="about-row">
+              <span data-i18n="about-author">Author</span>
+              <span>SeaOrange</span>
+            </div>
+            <div class="about-row">
+              <span data-i18n="about-license">License</span>
+              <span>MIT</span>
+            </div>
+          </div>
 
-    <button class="advanced-toggle" id="toggle-advanced">
-      <span data-i18n="advanced-colors">Advanced colors</span>
-      <span class="chevron">▼</span>
-    </button>
+          <div class="about-section">
+            <div class="about-section-title" data-i18n="about-tech">Tech Stack</div>
+            <div class="about-tags">
+              <span class="about-tag">Tauri v2</span>
+              <span class="about-tag">Rust</span>
+              <span class="about-tag">TypeScript</span>
+              <span class="about-tag">Vite</span>
+              <span class="about-tag">Canvas 2D</span>
+            </div>
+          </div>
 
-    <div class="advanced-colors" id="advanced-colors">
-      <div class="color-row">
-        <span class="color-label" data-i18n="color-work">Work</span>
-        <div class="color-value">
-          <span class="hex-text" id="hex-work">#FFAA44</span>
-          <input type="color" id="color-work" />
+          <div class="about-footer">
+            <span data-i18n="about-copyright">Made with love for Claude Code users.</span>
+          </div>
         </div>
       </div>
-      <div class="color-row">
-        <span class="color-label" data-i18n="color-success">Success</span>
-        <div class="color-value">
-          <span class="hex-text" id="hex-success">#6B8CFF</span>
-          <input type="color" id="color-success" />
-        </div>
-      </div>
-      <div class="color-row">
-        <span class="color-label" data-i18n="color-fail">Fail</span>
-        <div class="color-value">
-          <span class="hex-text" id="hex-fail">#889999</span>
-          <input type="color" id="color-fail" />
-        </div>
-      </div>
-      <div class="color-row">
-        <span class="color-label" data-i18n="color-sleep">Sleep</span>
-        <div class="color-value">
-          <span class="hex-text" id="hex-sleep">#6B8CFF</span>
-          <input type="color" id="color-sleep" />
-        </div>
-      </div>
-      <div class="row" style="justify-content: flex-end; margin-top: 8px;">
-        <button class="btn-subtle" id="btn-reset-colors" data-i18n="reset-colors">Reset to Primary</button>
-      </div>
-    </div>
-
-    <div class="row" style="margin-top: 12px;">
-      <select id="style-select"
-        style="width:100%; padding:8px 10px; background:var(--bg); color:var(--text); border:1px solid var(--border); border-radius:var(--radius-sm); font-size:13px; cursor:pointer;">
-        <option value="" data-i18n="style-random">Random</option>
-      </select>
-    </div>
-    <div class="row">
-      <span class="size-hint" data-i18n="style-hint">Choose the default pet style. New pets will use this style.</span>
-    </div>
+    </main>
   </div>
-
-  <p class="hint" data-i18n="settings-hint">Changes are saved automatically. Close this window when you are done.</p>
 
   <script type="module" src="/src/settings.ts"></script>
 </body>
