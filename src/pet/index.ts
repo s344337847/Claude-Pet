@@ -102,6 +102,7 @@ function updateWalk() {
     win.setPosition(new PhysicalPosition(Math.round(winX), Math.round(winY)));
     if (winY === targetY) {
       pet.setState('idle');
+      updateTooltipForState('idle');
     }
     return;
   }
@@ -143,9 +144,25 @@ const HAPPY_EMOJIS = [
   '（＾ｖ＾）', '(✯◡✯)', '＼(＾O＾)／', '(ﾉ◕ヮ◕)ﾉ*:･ﾟ✧', '(｡◕‿◕｡)',
 ];
 
+const LAZY_EMOJIS = [
+  '(￣o￣) . z Z', '(´-ω-`)', '(￣ρ￣)..zzZZ', '(￣へ￣)', '(｡･ω･｡)',
+  '(´～｀ヾ)', '(￣_,￣ )', '(｡-人-｡)', '(￣ε￣＠)', '(´-ι_-｀)',
+  '(-_-) zzz', '(￣。￣)', '(￣ー￣)', '(｡ŏ﹏ŏ｡)', '(´･ω･`)',
+];
+
+const FAIL_EMOJIS = [
+  '(｡•́︿•̀｡)', '(×_×)', '(￣Д￣)', '(;´Д`)', '(￣ヘ￣)',
+  '(╯°□°）╯', '(╥﹏╥)', '(ToT)', '(￣ ￣;)', '( ´-ω-` )',
+  '(´；Д；`)', '(×﹏×)', '(T_T)', '(っ- ‸ – ς)', '(￣▽￣*)ゞ',
+];
+
 function randomPick<T>(arr: T[]): T {
   return arr[Math.floor(Math.random() * arr.length)];
 }
+
+let currentCwd: string | undefined;
+let lastIdleTooltipTime = 0;
+let lazyEmojiTimer: ReturnType<typeof setTimeout> | null = null;
 
 async function expandWindowForTooltip() {
   if (tooltipExpanded) return;
@@ -159,7 +176,15 @@ async function expandWindowForTooltip() {
   await win.setPosition(new PhysicalPosition(Math.round(winX), Math.round(winY)));
 }
 
-async function clearTooltip() {
+function resetTooltipDom() {
+  tooltipEl.textContent = '';
+  tooltipEl.classList.remove('typing-done', 'scrolling');
+  tooltipEl.removeAttribute('data-state');
+  tooltipEl.style.removeProperty('--scroll-offset');
+  tooltipEl.style.removeProperty('--scroll-duration');
+}
+
+function cancelAllTooltipTimers() {
   if (typewriterTimer) {
     clearTimeout(typewriterTimer);
     typewriterTimer = null;
@@ -168,16 +193,50 @@ async function clearTooltip() {
     clearTimeout(successDelayTimer);
     successDelayTimer = null;
   }
-  tooltipEl.textContent = '';
-  tooltipEl.classList.remove('typing-done', 'scrolling');
-  tooltipEl.removeAttribute('data-state');
-  tooltipEl.style.removeProperty('--scroll-offset');
-  tooltipEl.style.removeProperty('--scroll-duration');
-  // tooltip 一直显示，不恢复窗口大小
+  if (lazyEmojiTimer) {
+    clearTimeout(lazyEmojiTimer);
+    lazyEmojiTimer = null;
+  }
+}
+
+function restoreIdleTooltip() {
+  lazyEmojiTimer = null;
+  const state = pet.getCurrentState();
+  if (state === 'idle' || state === 'walk') {
+    setSimpleTooltip(currentCwd || '...');
+  }
+}
+
+function setSimpleTooltip(text: string) {
+  cancelAllTooltipTimers();
+  resetTooltipDom();
+  tooltipEl.classList.add('visible');
+  tooltipEl.textContent = text;
+}
+
+function updateTooltipForState(state: PetState) {
+  if (state === 'enter' || state === 'idle' || state === 'walk') {
+    setSimpleTooltip(currentCwd || '...');
+  } else if (state === 'work') {
+    showTypewriter(randomPick(THINKING_EMOJIS));
+  } else if (state === 'success') {
+    showTypewriter(randomPick(HAPPY_EMOJIS));
+    const cwd = currentCwd;
+    if (cwd) {
+      successDelayTimer = setTimeout(() => {
+        showTypewriter(cwd);
+      }, 1800);
+    }
+  } else if (state === 'fail') {
+    showTypewriter(randomPick(FAIL_EMOJIS));
+  } else if (state === 'exit') {
+    setSimpleTooltip('Bye~');
+  }
 }
 
 async function showTypewriter(text: string, _state: 'success' | 'fail' | 'work' = 'success') {
-  await clearTooltip();
+  cancelAllTooltipTimers();
+  resetTooltipDom();
   await expandWindowForTooltip();
   tooltipEl.classList.add('visible');
   let index = 0;
@@ -222,14 +281,10 @@ listen<{ label: string; state: PetState; cwd?: string }>('pet_state_change', (ev
     if (newState === 'enter') {
       winY = screenH; // start just below visible area
     }
-    if (newState === 'success' && event.payload.cwd) {
-      showTypewriter(randomPick(HAPPY_EMOJIS));
-      successDelayTimer = setTimeout(() => {
-        showTypewriter(event.payload.cwd!);
-      }, 1800);
-    } else if (newState === 'work') {
-      showTypewriter(randomPick(THINKING_EMOJIS));
+    if (event.payload.cwd) {
+      currentCwd = event.payload.cwd;
     }
+    updateTooltipForState(newState);
     pet.setState(newState);
   }
 });
@@ -303,13 +358,28 @@ function tick(timestamp: number) {
 
   const state = pet.getCurrentState();
 
+  if (state === 'idle' || state === 'walk') {
+    if (lastIdleTooltipTime === 0) {
+      lastIdleTooltipTime = timestamp;
+    } else if (timestamp - lastIdleTooltipTime >= 30000) {
+      lastIdleTooltipTime = timestamp;
+      // 触发前再次确认当前仍是 idle/walk，避免状态已变仍执行
+      const current = pet.getCurrentState();
+      if (current === 'idle' || current === 'walk') {
+        setSimpleTooltip(randomPick(LAZY_EMOJIS));
+        lazyEmojiTimer = setTimeout(() => restoreIdleTooltip(), 3000);
+      }
+    }
+  } else {
+    lastIdleTooltipTime = 0;
+  }
+
   if (state === 'success' || state === 'fail') {
     stateTimer++;
     if (stateTimer > 120) {
       stateTimer = 0;
-      // 保留提示信息直至进入work状态
-      // clearTooltip();
       pet.setState('idle');
+      updateTooltipForState('idle');
     }
   }
 
@@ -333,6 +403,6 @@ Promise.all([initScreenSize(), initConfig()]).then(async () => {
   }
   // tooltip 默认一直显示
   await expandWindowForTooltip();
-  tooltipEl.classList.add('visible');
+  setSimpleTooltip(currentCwd || '...');
   requestAnimationFrame(tick);
 });
