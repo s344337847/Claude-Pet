@@ -7,7 +7,7 @@ use std::sync::{Arc, Mutex};
 use tauri::{Emitter, Manager};
 use tauri_plugin_store::StoreExt;
 
-pub const STYLE_NAMES: &[&str] = &["default-cat", "dog", "ayaka"];
+pub const STYLE_NAMES: &[&str] = &["default-cat", "dog", "ayaka", "ganyu"];
 const STORE_PATH: &str = "config.json";
 const CONFIG_KEY: &str = "config";
 const BASE_LOGICAL_SIZE: f64 = 32.0;

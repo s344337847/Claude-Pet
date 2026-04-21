@@ -6,5 +6,6 @@ export { ayakaStyle } from './ayaka';
 import { defaultStyle } from './default';
 import { dogStyle } from './dog';
 import { ayakaStyle } from './ayaka';
+import { ganyuStyle } from './ganyu';
 
-export const STYLES = [defaultStyle, dogStyle, ayakaStyle];
+export const STYLES = [defaultStyle, dogStyle, ayakaStyle, ganyuStyle];

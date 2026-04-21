@@ -44,6 +44,7 @@ const en: Dict = {
   "style-default-cat": "Default Cat",
   "style-dog": "Dog",
   "style-ayaka": "Ayaka",
+  "style-ganyu": "Ganyu",
   "style-hint": "Choose the default pet style. New pets will use this style.",
 };
 
@@ -89,6 +90,7 @@ const zh: Dict = {
   "style-default-cat": "默认猫咪",
   "style-dog": "狗狗",
   "style-ayaka": "绫华",
+  "style-ganyu": "甘雨",
   "style-hint": "选择默认宠物样式。新创建的宠物将使用此样式。",
 };
 
