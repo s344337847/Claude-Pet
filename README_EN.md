@@ -91,10 +91,7 @@ Add the following to your Claude Code `settings.json`:
             "type": "http",
             "url": "http://127.0.0.1:9876/v1/event/work",
             "method": "POST",
-            "headers": { "Content-Type": "application/json" },
-            "body": {
-              "session_id": "${hookContext.sessionId}"
-            }
+            "headers": { "Content-Type": "application/json" }
           }
         ]
       }
@@ -106,11 +103,7 @@ Add the following to your Claude Code `settings.json`:
             "type": "http",
             "url": "http://127.0.0.1:9876/v1/event/success",
             "method": "POST",
-            "headers": { "Content-Type": "application/json" },
-            "body": {
-              "session_id": "${hookContext.sessionId}",
-              "cwd": "${hookContext.cwd}"
-            }
+            "headers": { "Content-Type": "application/json" }
           }
         ]
       }
@@ -122,10 +115,7 @@ Add the following to your Claude Code `settings.json`:
             "type": "http",
             "url": "http://127.0.0.1:9876/v1/event/session_start",
             "method": "POST",
-            "headers": { "Content-Type": "application/json" },
-            "body": {
-              "session_id": "${hookContext.sessionId}"
-            }
+            "headers": { "Content-Type": "application/json" }
           }
         ]
       }
@@ -137,10 +127,7 @@ Add the following to your Claude Code `settings.json`:
             "type": "http",
             "url": "http://127.0.0.1:9876/v1/event/session_end",
             "method": "POST",
-            "headers": { "Content-Type": "application/json" },
-            "body": {
-              "session_id": "${hookContext.sessionId}"
-            }
+            "headers": { "Content-Type": "application/json" }
           }
         ]
       }
