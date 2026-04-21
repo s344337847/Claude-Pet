@@ -129,6 +129,23 @@ function updateWalk() {
 
 const tooltipEl = document.getElementById('pet-tooltip') as HTMLDivElement;
 let typewriterTimer: ReturnType<typeof setTimeout> | null = null;
+let successDelayTimer: ReturnType<typeof setTimeout> | null = null;
+
+const THINKING_EMOJIS = [
+  '(｡•́︿•̀｡)', '(•́ ⍨ •̀)', '(⊙_⊙)', '(｡ŏ_ŏ)', '(￣_￣)',
+  '(・へ・)', '(｡･ω･｡)?', '(⊙.⊙)', '(o_O)', '(・_・ヾ)',
+  '(°o°;)', '(;°o°)', '(⊙_⊙;)', '(・・ )?', '(￣?￣)',
+];
+
+const HAPPY_EMOJIS = [
+  '(｡♥‿♥｡)', '(◕‿◕)', '(✿◠‿◠)', '٩(◕‿◕｡)۶', '(ﾉ◕ヮ◕)ﾉ',
+  'ヽ(✿ﾟ▽ﾟ)ノ', 'o(≧▽≦)o', '(*^▽^*)', '٩(｡•́‿•̀｡)۶', '♪(´▽｀)',
+  '（＾ｖ＾）', '(✯◡✯)', '＼(＾O＾)／', '(ﾉ◕ヮ◕)ﾉ*:･ﾟ✧', '(｡◕‿◕｡)',
+];
+
+function randomPick<T>(arr: T[]): T {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
 
 async function expandWindowForTooltip() {
   if (tooltipExpanded) return;
@@ -142,32 +159,26 @@ async function expandWindowForTooltip() {
   await win.setPosition(new PhysicalPosition(Math.round(winX), Math.round(winY)));
 }
 
-async function restoreWindowSize() {
-  if (!tooltipExpanded) return;
-  tooltipExpanded = false;
-  const displaySize = pet.getDisplaySize();
-  await win.setSize(new LogicalSize(displaySize, displaySize));
-  document.body.style.height = `${displaySize}px`;
-  document.documentElement.style.height = `${displaySize}px`;
-  winY += Math.round(TOOLTIP_EXTRA_LOGICAL * scaleFactor);
-  await win.setPosition(new PhysicalPosition(Math.round(winX), Math.round(winY)));
-}
-
 async function clearTooltip() {
   if (typewriterTimer) {
     clearTimeout(typewriterTimer);
     typewriterTimer = null;
   }
+  if (successDelayTimer) {
+    clearTimeout(successDelayTimer);
+    successDelayTimer = null;
+  }
   tooltipEl.textContent = '';
-  tooltipEl.classList.remove('visible', 'typing-done');
+  tooltipEl.classList.remove('typing-done', 'scrolling');
   tooltipEl.removeAttribute('data-state');
-  await restoreWindowSize();
+  tooltipEl.style.removeProperty('--scroll-offset');
+  tooltipEl.style.removeProperty('--scroll-duration');
+  // tooltip 一直显示，不恢复窗口大小
 }
 
-async function showTypewriter(text: string, state: 'success' | 'fail' | 'work' = 'success') {
+async function showTypewriter(text: string, _state: 'success' | 'fail' | 'work' = 'success') {
   await clearTooltip();
   await expandWindowForTooltip();
-  tooltipEl.setAttribute('data-state', state);
   tooltipEl.classList.add('visible');
   let index = 0;
   tooltipEl.classList.remove('typing-done');
@@ -212,9 +223,12 @@ listen<{ label: string; state: PetState; cwd?: string }>('pet_state_change', (ev
       winY = screenH; // start just below visible area
     }
     if (newState === 'success' && event.payload.cwd) {
-      showTypewriter(event.payload.cwd);
+      showTypewriter(randomPick(HAPPY_EMOJIS));
+      successDelayTimer = setTimeout(() => {
+        showTypewriter(event.payload.cwd!);
+      }, 1800);
     } else if (newState === 'work') {
-      clearTooltip();
+      showTypewriter(randomPick(THINKING_EMOJIS));
     }
     pet.setState(newState);
   }
@@ -317,5 +331,8 @@ Promise.all([initScreenSize(), initConfig()]).then(async () => {
   } catch {
     // ignore
   }
+  // tooltip 默认一直显示
+  await expandWindowForTooltip();
+  tooltipEl.classList.add('visible');
   requestAnimationFrame(tick);
 });

@@ -31,31 +31,29 @@ canvas {
   /* image-rendering: pixelated; */
 }
 
-/* === Pet Tooltip: Pixel-Art Dialog Style === */
+/* === Pet Tooltip: Simplified Style === */
 .pet-tooltip {
   position: absolute;
   bottom: calc(100% + 8px);
   left: 50%;
-  transform: translateX(-50%) translateY(4px);
+  transform: translateX(-50%) translateY(0);
   padding: 2px 5px;
-  background: #1a1a2e;
-  color: #00e5a0;
+  background: #fff;
+  color: #333;
   font-size: 10px;
   font-family: 'Courier New', Courier, monospace;
   line-height: 1.4;
-  border: 2px solid #00e5a0;
-  border-radius: 0;
-  opacity: 0;
+  border: 2px solid #333;
+  opacity: 1;
   pointer-events: none;
   transition: opacity 0.15s ease, transform 0.15s ease;
-  box-shadow:
-    inset 0 0 12px rgba(0, 229, 160, 0.08),
-    0 0 4px rgba(0, 229, 160, 0.3),
-    0 0 12px rgba(0, 229, 160, 0.15);
+  box-shadow: none;
   width: 100%;
+  border-radius: 5px;
+  text-align: center;
 }
 
-/* Pixel-art arrow pointing down at the pet */
+/* Arrow pointing down at the pet */
 .pet-tooltip::before {
   content: '';
   position: absolute;
@@ -66,10 +64,10 @@ canvas {
   height: 0;
   border-left: 5px solid transparent;
   border-right: 5px solid transparent;
-  border-top: 5px solid #00e5a0;
+  border-top: 5px solid #333;
 }
 
-/* Inner arrow to create pixel-art outline effect */
+/* Inner arrow to match background */
 .pet-tooltip::after {
   content: '';
   position: absolute;
@@ -81,12 +79,7 @@ canvas {
   margin-top: -2px;
   border-left: 3px solid transparent;
   border-right: 3px solid transparent;
-  border-top: 3px solid #1a1a2e;
-}
-
-.pet-tooltip.visible {
-  opacity: 1;
-  transform: translateX(-50%) translateY(0);
+  border-top: 3px solid #fff;
 }
 
 /* === Scroll inner wrapper === */
@@ -123,48 +116,4 @@ canvas {
 @keyframes tooltip-cursor-blink {
   0%, 100% { opacity: 1; }
   50% { opacity: 0; }
-}
-
-/* === State Variants === */
-
-/* Success state (default green) */
-.pet-tooltip[data-state="success"] {
-  color: #00e5a0;
-  border-color: #00e5a0;
-  box-shadow:
-    inset 0 0 12px rgba(0, 229, 160, 0.08),
-    0 0 4px rgba(0, 229, 160, 0.3),
-    0 0 12px rgba(0, 229, 160, 0.15);
-}
-
-.pet-tooltip[data-state="success"]::before {
-  border-top-color: #00e5a0;
-}
-
-/* Fail state (pixel red) */
-.pet-tooltip[data-state="fail"] {
-  color: #ff6b6b;
-  border-color: #ff6b6b;
-  box-shadow:
-    inset 0 0 12px rgba(255, 107, 107, 0.08),
-    0 0 4px rgba(255, 107, 107, 0.3),
-    0 0 12px rgba(255, 107, 107, 0.15);
-}
-
-.pet-tooltip[data-state="fail"]::before {
-  border-top-color: #ff6b6b;
-}
-
-/* Work/Info state (pixel cyan) */
-.pet-tooltip[data-state="work"] {
-  color: #00d4ff;
-  border-color: #00d4ff;
-  box-shadow:
-    inset 0 0 12px rgba(0, 212, 255, 0.08),
-    0 0 4px rgba(0, 212, 255, 0.3),
-    0 0 12px rgba(0, 212, 255, 0.15);
-}
-
-.pet-tooltip[data-state="work"]::before {
-  border-top-color: #00d4ff;
 }
