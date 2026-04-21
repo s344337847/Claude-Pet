@@ -7,6 +7,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const CANVAS_SIZE = 1024;
 const GRID_SIZE = 32;
 const PIXEL_SIZE = CANVAS_SIZE / GRID_SIZE;
+const SCALE = 2;
 
 // Colors matching the live renderer (PetRenderer.ts + IdleAction.ts)
 const COLORS = {
@@ -15,7 +16,7 @@ const COLORS = {
   mouth: '#334',
 };
 
-// Pixel-art cat head centered in the 32x32 grid (icon style, no body)
+// Original pixel-art cat head in the 32x32 grid (icon style, no body)
 const style = {
   head: { x: 10, y: 12, w: 12, h: 10 },
   ears: [{ x: 10, y: 10 }, { x: 11, y: 10 }, { x: 20, y: 10 }, { x: 21, y: 10 }],
@@ -24,14 +25,23 @@ const style = {
   mouth: [{ x: 14, y: 19 }, { x: 15, y: 19 }, { x: 16, y: 19 }, { x: 17, y: 19 }],
 };
 
-function rect(x, y, w, h, color) {
-  return `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${color}"/>`;
+// Bounding box of the original icon shape
+const BOUNDS = { minX: 10, minY: 10, width: 13, height: 13 };
+
+// Center the scaled shape in the grid
+const OFFSET_X = Math.floor((GRID_SIZE - BOUNDS.width * SCALE) / 2);
+const OFFSET_Y = Math.floor((GRID_SIZE - BOUNDS.height * SCALE) / 2);
+
+function mapX(x) {
+  return OFFSET_X + (x - BOUNDS.minX) * SCALE;
 }
 
-function pixelRect(x, y, color) {
-  const px = x * PIXEL_SIZE;
-  const py = y * PIXEL_SIZE;
-  return rect(px, py, PIXEL_SIZE, PIXEL_SIZE, color);
+function mapY(y) {
+  return OFFSET_Y + (y - BOUNDS.minY) * SCALE;
+}
+
+function rect(x, y, w, h, color) {
+  return `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${color}"/>`;
 }
 
 function pixelRects(x, y, w, h, color) {
@@ -43,13 +53,39 @@ function pixelRects(x, y, w, h, color) {
 const shapes = [];
 
 // Head layer
-shapes.push(pixelRects(style.head.x, style.head.y, style.head.w, style.head.h, COLORS.pet));
-for (const p of style.ears) shapes.push(pixelRect(p.x, p.y, COLORS.pet));
+shapes.push(
+  pixelRects(
+    mapX(style.head.x),
+    mapY(style.head.y),
+    style.head.w * SCALE,
+    style.head.h * SCALE,
+    COLORS.pet
+  )
+);
+for (const p of style.ears)
+  shapes.push(pixelRects(mapX(p.x), mapY(p.y), SCALE, SCALE, COLORS.pet));
 
 // Face layer (neutral expression)
-shapes.push(pixelRects(style.eyeLeft.x, style.eyeLeft.y, style.eyeLeft.w, style.eyeLeft.h, COLORS.face));
-shapes.push(pixelRects(style.eyeRight.x, style.eyeRight.y, style.eyeRight.w, style.eyeRight.h, COLORS.face));
-for (const p of style.mouth) shapes.push(pixelRect(p.x, p.y, COLORS.mouth));
+shapes.push(
+  pixelRects(
+    mapX(style.eyeLeft.x),
+    mapY(style.eyeLeft.y),
+    style.eyeLeft.w * SCALE,
+    style.eyeLeft.h * SCALE,
+    COLORS.face
+  )
+);
+shapes.push(
+  pixelRects(
+    mapX(style.eyeRight.x),
+    mapY(style.eyeRight.y),
+    style.eyeRight.w * SCALE,
+    style.eyeRight.h * SCALE,
+    COLORS.face
+  )
+);
+for (const p of style.mouth)
+  shapes.push(pixelRects(mapX(p.x), mapY(p.y), SCALE, SCALE, COLORS.mouth));
 
 const svg = `<?xml version="1.0" encoding="UTF-8"?>
 <svg width="${CANVAS_SIZE}" height="${CANVAS_SIZE}" viewBox="0 0 ${CANVAS_SIZE} ${CANVAS_SIZE}" xmlns="http://www.w3.org/2000/svg">
