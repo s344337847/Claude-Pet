@@ -40,7 +40,13 @@ pub(crate) fn position_window_on_monitor(
         let position = monitor.position();
         let scale_factor = monitor.scale_factor();
         let phys = (logical_size as f64 * scale_factor) as i32;
-        let x = position.x + (size.width as i32) - phys - 10;
+        let margin = 10;
+        let available_w = (size.width as i32) - phys - margin * 2;
+        let x = if available_w > 0 {
+            position.x + margin + fastrand::i32(0..available_w)
+        } else {
+            position.x + margin
+        };
         let y = position.y + (size.height as i32) - phys - 50;
         let _ = window.set_position(tauri::Position::Physical(tauri::PhysicalPosition::new(x, y)));
     }
