@@ -385,4 +385,95 @@ function applyLanguage(lang: string) {
 btnLangEn.addEventListener("click", () => applyLanguage("en"));
 btnLangZh.addEventListener("click", () => applyLanguage("zh"));
 
+/* ── Updater ── */
+
+const btnCheckUpdate = document.getElementById("btn-check-update") as HTMLButtonElement;
+const updateStatus = document.getElementById("update-status") as HTMLDivElement;
+const updateDetails = document.getElementById("update-details") as HTMLDivElement;
+const updateVersion = document.getElementById("update-version") as HTMLDivElement;
+const updateNotes = document.getElementById("update-notes") as HTMLDivElement;
+const btnInstallUpdate = document.getElementById("btn-install-update") as HTMLButtonElement;
+const updateProgress = document.getElementById("update-progress") as HTMLDivElement;
+const progressFill = document.getElementById("progress-fill") as HTMLDivElement;
+const progressText = document.getElementById("progress-text") as HTMLDivElement;
+
+let totalDownloaded = 0;
+
+function formatBytes(bytes: number): string {
+  if (bytes === 0) return "0 B";
+  const k = 1024;
+  const sizes = ["B", "KB", "MB", "GB"];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + " " + sizes[i];
+}
+
+async function doCheckUpdate() {
+  btnCheckUpdate.disabled = true;
+  updateStatus.textContent = t("update-checking");
+  updateDetails.style.display = "none";
+  updateProgress.style.display = "none";
+
+  try {
+    const result = await invoke<{
+      version: string;
+      date: string | null;
+      body: string | null;
+    } | null>("check_update");
+
+    if (result) {
+      updateStatus.textContent = t("update-available").replace("{version}", result.version);
+      updateVersion.textContent = `v${result.version}`;
+      updateNotes.textContent = result.body || "";
+      updateDetails.style.display = "block";
+    } else {
+      updateStatus.textContent = t("update-not-found");
+    }
+  } catch (err) {
+    console.error("Check update failed:", err);
+    updateStatus.textContent = t("update-error");
+  } finally {
+    btnCheckUpdate.disabled = false;
+  }
+}
+
+async function doInstallUpdate() {
+  btnInstallUpdate.disabled = true;
+  btnCheckUpdate.disabled = true;
+  updateStatus.textContent = t("update-downloading");
+  updateProgress.style.display = "block";
+  totalDownloaded = 0;
+
+  try {
+    await invoke("install_update");
+    updateStatus.textContent = t("update-restart");
+    updateProgress.style.display = "none";
+  } catch (err) {
+    console.error("Install update failed:", err);
+    updateStatus.textContent = t("update-error");
+    btnInstallUpdate.disabled = false;
+    btnCheckUpdate.disabled = false;
+  }
+}
+
+btnCheckUpdate.addEventListener("click", doCheckUpdate);
+btnInstallUpdate.addEventListener("click", doInstallUpdate);
+
+listen("update_progress", (event) => {
+  const payload = event.payload as { chunk: number; total: number | null };
+  totalDownloaded += payload.chunk;
+  if (payload.total && payload.total > 0) {
+    const pct = Math.min(100, Math.round((totalDownloaded / payload.total) * 100));
+    progressFill.style.width = `${pct}%`;
+    progressText.textContent = `${formatBytes(totalDownloaded)} / ${formatBytes(payload.total)}`;
+  } else {
+    progressFill.style.width = "100%";
+    progressText.textContent = formatBytes(totalDownloaded);
+  }
+}).catch(console.error);
+
+listen("update_done", () => {
+  progressFill.style.width = "100%";
+  progressText.textContent = "";
+}).catch(console.error);
+
 init().catch(console.error);

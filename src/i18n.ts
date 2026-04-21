@@ -53,6 +53,15 @@ const en: Dict = {
   "about-license": "License",
   "about-tech": "Tech Stack",
   "about-copyright": "Made with love for Claude Code users.",
+  "check-update": "Check for Updates",
+  "update-checking": "Checking...",
+  "update-available": "Update available: v{version}",
+  "update-not-found": "You are on the latest version.",
+  "update-error": "Failed to check for updates.",
+  "update-download": "Download & Install",
+  "update-downloading": "Downloading...",
+  "update-restart": "Restart to apply update.",
+  "update-release-notes": "Release Notes",
 };
 
 const zh: Dict = {
@@ -106,6 +115,15 @@ const zh: Dict = {
   "about-license": "许可证",
   "about-tech": "技术栈",
   "about-copyright": "专为 Claude Code 用户打造。",
+  "check-update": "检查更新",
+  "update-checking": "检查中...",
+  "update-available": "发现新版本: v{version}",
+  "update-not-found": "当前已是最新版本。",
+  "update-error": "检查更新失败。",
+  "update-download": "下载并安装",
+  "update-downloading": "下载中...",
+  "update-restart": "重启以应用更新。",
+  "update-release-notes": "更新日志",
 };
 
 const dicts: Record<string, Dict> = { en, zh };

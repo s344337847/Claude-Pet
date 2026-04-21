@@ -615,6 +615,96 @@
       font-size: 11px;
       color: var(--text-secondary);
     }
+
+    /* Update section */
+    .update-section {
+      width: 100%;
+      max-width: 280px;
+      margin-bottom: 16px;
+    }
+
+    .btn-update {
+      width: 100%;
+      padding: 8px 16px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text);
+      background: var(--accent);
+      border: none;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: background 0.15s ease;
+    }
+
+    .btn-update:hover {
+      background: var(--accent-hover);
+    }
+
+    .btn-update:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .update-status {
+      font-size: 12px;
+      color: var(--text-secondary);
+      text-align: center;
+      margin-top: 8px;
+      min-height: 18px;
+    }
+
+    .update-details {
+      margin-top: 12px;
+      padding: 12px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      text-align: left;
+    }
+
+    .update-version {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--accent);
+      margin-bottom: 8px;
+    }
+
+    .update-notes {
+      font-size: 12px;
+      color: var(--text-secondary);
+      line-height: 1.5;
+      max-height: 120px;
+      overflow-y: auto;
+      margin-bottom: 12px;
+      white-space: pre-wrap;
+    }
+
+    .update-progress {
+      margin-top: 12px;
+    }
+
+    .progress-bar {
+      width: 100%;
+      height: 4px;
+      background: var(--border);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: var(--accent);
+      border-radius: 2px;
+      transition: width 0.2s ease;
+      width: 0%;
+    }
+
+    .progress-text {
+      font-size: 11px;
+      color: var(--text-secondary);
+      text-align: center;
+      margin-top: 6px;
+    }
   </style>
 </head>
 
@@ -806,6 +896,21 @@
           </div>
           <div class="about-name">Claude Pet</div>
           <div class="about-version" id="about-version">v0.1.0</div>
+
+          <div class="update-section" id="update-section">
+            <button class="btn-update" id="btn-check-update" data-i18n="check-update">Check for Updates</button>
+            <div class="update-status" id="update-status"></div>
+            <div class="update-details" id="update-details" style="display:none;">
+              <div class="update-version" id="update-version"></div>
+              <div class="update-notes" id="update-notes"></div>
+              <button class="btn-update" id="btn-install-update" data-i18n="update-download">Download & Install</button>
+            </div>
+            <div class="update-progress" id="update-progress" style="display:none;">
+              <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+              <div class="progress-text" id="progress-text"></div>
+            </div>
+          </div>
+
           <p class="about-desc" data-i18n="about-desc">A pixel-art desktop pet that lives on your screen and reports Claude Code task status in real time.</p>
 
           <div class="about-section">

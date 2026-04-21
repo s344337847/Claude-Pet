@@ -10,6 +10,7 @@ use tauri::menu::{MenuBuilder, MenuItemBuilder};
 use tauri::tray::TrayIconBuilder;
 use tauri::{Emitter, Manager, WebviewWindow};
 use tauri_plugin_store::StoreExt;
+use tauri_plugin_updater::UpdaterExt;
 
 pub(crate) fn find_monitor(
     app_handle: &tauri::AppHandle,
@@ -197,6 +198,45 @@ fn set_monitor(app: tauri::AppHandle, monitor_name: Option<String>) -> Result<()
 }
 
 #[tauri::command]
+async fn check_update(app: tauri::AppHandle) -> Result<Option<serde_json::Value>, String> {
+    let updater = app.updater().map_err(|e| e.to_string())?;
+    match updater.check().await.map_err(|e| e.to_string())? {
+        Some(update) => Ok(Some(serde_json::json!({
+            "version": update.version,
+            "date": update.date.map(|d| d.to_string()),
+            "body": update.body,
+        }))),
+        None => Ok(None),
+    }
+}
+
+#[tauri::command]
+async fn install_update(app: tauri::AppHandle) -> Result<(), String> {
+    let updater = app.updater().map_err(|e| e.to_string())?;
+    if let Some(update) = updater.check().await.map_err(|e| e.to_string())? {
+        let app_clone = app.clone();
+        update
+            .download_and_install(
+                move |chunk_length, content_length| {
+                    let _ = app_clone.emit(
+                        "update_progress",
+                        serde_json::json!({
+                            "chunk": chunk_length,
+                            "total": content_length,
+                        }),
+                    );
+                },
+                move || {
+                    let _ = app.emit("update_done", ());
+                },
+            )
+            .await
+            .map_err(|e| e.to_string())?;
+    }
+    Ok(())
+}
+
+#[tauri::command]
 fn set_language(app: tauri::AppHandle, language: String) -> Result<(), String> {
     let store = app.store(STORE_PATH).map_err(|e| e.to_string())?;
     let mut config: Config = match store.get(CONFIG_KEY) {
@@ -219,6 +259,7 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_store::Builder::default().build())
+        .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_autostart::init(
             tauri_plugin_autostart::MacosLauncher::LaunchAgent,
             Some(vec!["--hide"]),
@@ -232,7 +273,9 @@ pub fn run() {
             list_styles,
             get_available_monitors,
             set_monitor,
-            set_language
+            set_language,
+            check_update,
+            install_update
         ])
         .setup(|app| {
             let main_window = app.get_webview_window("main").expect("main window not found");
