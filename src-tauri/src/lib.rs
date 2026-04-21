@@ -62,17 +62,26 @@ fn build_tray_menu<R: tauri::Runtime>(
     app: &impl tauri::Manager<R>,
     lang: &str,
 ) -> Result<tauri::menu::Menu<R>, tauri::Error> {
-    let (settings_l, pets_l, devtools_l, quit_l) = match lang {
-        "zh" => ("设置", "宠物管理", "开发者工具", "退出"),
-        _ => ("Settings", "Pet Manager", "DevTools", "Quit"),
+    let (settings_l, pets_l, quit_l) = match lang {
+        "zh" => ("设置", "宠物管理", "退出"),
+        _ => ("Settings", "Pet Manager", "Quit"),
     };
     let settings_i = MenuItemBuilder::new(settings_l).id("settings").build(app)?;
     let pets_i = MenuItemBuilder::new(pets_l).id("pets").build(app)?;
-    let devtools_i = MenuItemBuilder::new(devtools_l).id("devtools").build(app)?;
     let quit_i = MenuItemBuilder::new(quit_l).id("quit").build(app)?;
-    MenuBuilder::new(app)
-        .items(&[&settings_i, &pets_i, &devtools_i, &quit_i])
-        .build()
+    let menu = MenuBuilder::new(app)
+        .items(&[&settings_i, &pets_i, &quit_i]);
+    #[cfg(dev)]
+    {
+        let devtools_l = match lang {
+            "zh" => "开发者工具",
+            _ => "DevTools",
+        };
+        let devtools_i = MenuItemBuilder::new(devtools_l).id("devtools").build(app)?;
+        return menu.items(&[&devtools_i]).build();
+    }
+    #[cfg(not(dev))]
+    menu.build()
 }
 
 #[tauri::command]
