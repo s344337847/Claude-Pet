@@ -27,3 +27,4 @@ dist-ssr
 .worktrees
 worktrees
 *.cmd
+/scripts/build.js
