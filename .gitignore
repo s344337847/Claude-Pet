@@ -30,3 +30,4 @@ worktrees
 /scripts/build.js
 *.key
 /release/*
+/docs/*
