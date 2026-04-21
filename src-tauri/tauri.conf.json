@@ -1,6 +1,6 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "Claude Pet",
+  "productName": "Claude-Pet",
   "version": "0.0.2",
   "identifier": "com.administrator.claude-pet",
   "build": {
@@ -56,7 +56,8 @@
       "icons/128x128@2x.png",
       "icons/icon.icns",
       "icons/icon.ico"
-    ]
+    ],
+    "createUpdaterArtifacts": true
   },
   "plugins": {
     "updater": {
@@ -64,7 +65,7 @@
       "endpoints": [
         "https://github.com/s344337847/Claude-Pet/releases/latest/download/latest.json"
       ],
-      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEY0ODRGOUE3ODk3ODg2QUUKUldTdWhuaUpwL21FOUZNM1FkOWMrT21OTlRiMUFUaG9JU0xUckNlQTVGNWhPTkpyMXdaQklZSzUK"
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDJDQTA2MUVDQTM2MzBDN0IKUldSN0RHT2o3R0dnTE5kdGUzdm1Wci8wT1IrZWlwMkJMd2V6MUF0ejNKdUNWZkwyR3gxYXNwRjEK"
     }
   }
 }
