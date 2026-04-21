@@ -26,3 +26,4 @@ dist-ssr
 # Worktrees
 .worktrees
 worktrees
+*.cmd
