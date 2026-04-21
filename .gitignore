@@ -28,3 +28,5 @@ dist-ssr
 worktrees
 *.cmd
 /scripts/build.js
+*.key
+/release/*
